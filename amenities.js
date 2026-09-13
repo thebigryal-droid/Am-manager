@@ -718,7 +718,7 @@
                     <input
                         class="form-control"
                         id="amenity-form-responsible"
-                        value="${escape(record.responsible || "")}"
+                        value="${escape(record.responsible || "Abis Rizvi")}"
                         placeholder="Responsible person"
                     >
                 </div>
@@ -854,7 +854,7 @@
             get("amenity-form-type")?.value.trim() || "";
 
         const responsible =
-            get("amenity-form-responsible")?.value.trim() || "";
+            get("amenity-form-responsible")?.value.trim() || "Abis Rizvi";
 
         const status =
             get("amenity-form-status")?.value ||
