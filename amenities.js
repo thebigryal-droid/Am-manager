@@ -237,7 +237,7 @@
             zone: record.zone || "",
             amenity: record.amenity || "",
             type: record.type || "",
-            responsible: record.responsible || "",
+            responsible: record.responsible || "Abis Rizvi",
             status: record.status || STATUS.OPERATIONAL,
             openingTime: record.openingTime || "",
             closingTime: record.closingTime || "",
@@ -551,6 +551,8 @@
                             ${escape(record.openingTime || "—")}
                         </strong>
                     </div>
+                    
+                    
 
                     <div>
                         <span>Closing</span>
@@ -854,7 +856,7 @@
             get("amenity-form-type")?.value.trim() || "";
 
         const responsible =
-            get("amenity-form-responsible")?.value.trim() || "Abis Rizvi";
+            get("amenity-form-responsible")?.value.trim() || "abis Rizvi";
 
         const status =
             get("amenity-form-status")?.value ||
