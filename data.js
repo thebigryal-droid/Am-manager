@@ -1,6 +1,7 @@
 /* =========================================================
    FACILITY EXECUTIVE OS
    CENTRAL DATA LAYER
+   LOCAL CACHE + FIRESTORE SYNCHRONIZATION
    Compatible with original modular project
    ========================================================= */
 
@@ -9,6 +10,7 @@
 
     const FX = window.FX = window.FX || {};
     const FXData = window.FXData = window.FXData || {};
+    const Firebase = window.FXFirebase || {};
 
     const STORAGE_KEY = "facilityExecutiveOSData";
 
@@ -48,6 +50,51 @@
         }
     };
 
+    /*
+       These collections are synchronized with Firestore.
+
+       dashboard and settings remain local because they are
+       application-level objects rather than record collections.
+    */
+    const FIRESTORE_COLLECTIONS = [
+        "amenities",
+        "checklist",
+        "control",
+        "bookings",
+        "bookingReports",
+        "staff_master",
+        "attendance",
+        "hk_schedule",
+        "pool_logs",
+        "maintenance",
+        "inventory",
+        "inventory_transactions",
+        "complaints",
+        "amenity_history",
+        "control_history",
+        "deep_cleaning",
+        "manager_walk",
+        "executiveReports"
+    ];
+
+    const COLLECTION_ALIASES = {
+        complaints: ["issues"],
+        staff_master: ["staff"],
+        hk_schedule: ["housekeepingSchedule"],
+        pool_logs: ["pool"],
+        deep_cleaning: ["deepCleaning"],
+        manager_walk: ["managerWalk"]
+    };
+
+    const firestoreState = {
+        enabled: true,
+        syncing: false,
+        ready: false,
+        lastSync: null,
+        error: null,
+        pending: new Map()
+    };
+
     function deepClone(value) {
         if (value === null || value === undefined) {
             return value;
@@ -58,10 +105,14 @@
                 return structuredClone(value);
             }
         } catch (error) {
-            // Fall back to JSON cloning below.
+            // Continue to JSON fallback.
         }
 
-        return JSON.parse(JSON.stringify(value));
+        try {
+            return JSON.parse(JSON.stringify(value));
+        } catch (error) {
+            return value;
+        }
     }
 
     function createId(prefix) {
@@ -123,9 +174,7 @@
                     base[key],
                     incomingValue
                 );
-            } else if (
-                Array.isArray(incomingValue)
-            ) {
+            } else if (Array.isArray(incomingValue)) {
                 base[key] = incomingValue.map(function (record) {
                     if (
                         record &&
@@ -145,25 +194,11 @@
         return base;
     }
 
-    /*
-       Keep the persisted data model aligned with the module collection
-       names. Older builds used camelCase or the generic "issues" and
-       "staff" keys; normalize those aliases once when data is loaded or
-       imported so records do not disappear into duplicate collections.
-    */
-    const COLLECTION_ALIASES = {
-        complaints: ["issues"],
-        staff_master: ["staff"],
-        hk_schedule: ["housekeepingSchedule"],
-        pool_logs: ["pool"],
-        deep_cleaning: ["deepCleaning"],
-        manager_walk: ["managerWalk"]
-    };
-
     function normalizeCollections(data) {
-        const normalized = data && typeof data === "object"
-            ? data
-            : deepClone(defaultData);
+        const normalized =
+            data && typeof data === "object"
+                ? data
+                : deepClone(defaultData);
 
         Object.keys(COLLECTION_ALIASES).forEach(function (canonical) {
             const canonicalRecords = Array.isArray(normalized[canonical])
@@ -188,7 +223,10 @@
 
                     if (!id || !seenIds.has(id)) {
                         canonicalRecords.push(record);
-                        if (id) seenIds.add(id);
+
+                        if (id) {
+                            seenIds.add(id);
+                        }
                     }
                 });
 
@@ -222,7 +260,9 @@
         }
 
         if (!storedData) {
-            return normalizeCollections(deepClone(defaultData));
+            return normalizeCollections(
+                deepClone(defaultData)
+            );
         }
 
         try {
@@ -250,7 +290,9 @@
                 error
             );
 
-            return normalizeCollections(deepClone(defaultData));
+            return normalizeCollections(
+                deepClone(defaultData)
+            );
         }
     }
 
@@ -281,7 +323,10 @@
             );
 
             if (typeof FX.emit === "function") {
-                FX.emit("data:saved", deepClone(FX.data));
+                FX.emit(
+                    "data:saved",
+                    deepClone(FX.data)
+                );
             }
 
             return true;
@@ -303,13 +348,18 @@
     }
 
     function resetData() {
-        FX.data = normalizeCollections(deepClone(defaultData));
+        FX.data = normalizeCollections(
+            deepClone(defaultData)
+        );
 
         syncLegacyCollections();
         saveData();
 
         if (typeof FX.emit === "function") {
-            FX.emit("data:reset", deepClone(FX.data));
+            FX.emit(
+                "data:reset",
+                deepClone(FX.data)
+            );
         }
 
         return FX.data;
@@ -341,8 +391,22 @@
         saveData();
 
         if (typeof FX.emit === "function") {
-            FX.emit("data:imported", deepClone(FX.data));
+            FX.emit(
+                "data:imported",
+                deepClone(FX.data)
+            );
         }
+
+        FIRESTORE_COLLECTIONS.forEach(function (collectionName) {
+            const records = getCollection(collectionName);
+
+            records.forEach(function (record) {
+                queueFirestoreWrite(
+                    collectionName,
+                    record
+                );
+            });
+        });
 
         return FX.data;
     }
@@ -379,6 +443,427 @@
                 deepClone(payload)
             );
         }
+    }
+
+    function isFirestoreReady() {
+        return Boolean(
+            firestoreState.enabled &&
+            Firebase &&
+            typeof Firebase.getFirestore === "function" &&
+            Firebase.getFirestore() &&
+            Firebase.state &&
+            Firebase.state.modules &&
+            typeof Firebase.getCurrentUser === "function" &&
+            Firebase.getCurrentUser()
+        );
+    }
+
+    function getFirestoreParts() {
+        if (!isFirestoreReady()) {
+            return null;
+        }
+
+        return {
+            db: Firebase.getFirestore(),
+            modules: Firebase.state.modules,
+            user: Firebase.getCurrentUser()
+        };
+    }
+
+    function getFirestoreDocumentPath(collectionName, recordId) {
+        const user = Firebase.getCurrentUser();
+
+        if (!user || !user.uid) {
+            return null;
+        }
+
+        return {
+            root: "facilities",
+            facilityId: user.uid,
+            collection: collectionName,
+            recordId: recordId
+        };
+    }
+
+    function getFirestoreDocumentReference(
+        collectionName,
+        recordId
+    ) {
+        const parts = getFirestoreParts();
+
+        if (!parts) {
+            return null;
+        }
+
+        const path = getFirestoreDocumentPath(
+            collectionName,
+            recordId
+        );
+
+        if (!path) {
+            return null;
+        }
+
+        return parts.modules.doc(
+            parts.db,
+            path.root,
+            path.facilityId,
+            path.collection,
+            path.recordId
+        );
+    }
+
+    function getFirestoreCollectionReference(collectionName) {
+        const parts = getFirestoreParts();
+
+        if (!parts) {
+            return null;
+        }
+
+        const user = parts.user;
+
+        return parts.modules.collection(
+            parts.db,
+            "facilities",
+            user.uid,
+            collectionName
+        );
+    }
+
+    async function writeRecordToFirestore(
+        collectionName,
+        record
+    ) {
+        if (!record || !record.id) {
+            return false;
+        }
+
+        const parts = getFirestoreParts();
+
+        if (!parts) {
+            return false;
+        }
+
+        const reference = getFirestoreDocumentReference(
+            collectionName,
+            record.id
+        );
+
+        if (!reference) {
+            return false;
+        }
+
+        await parts.modules.setDoc(
+            reference,
+            deepClone(record),
+            { merge: true }
+        );
+
+        return true;
+    }
+
+    async function deleteRecordFromFirestore(
+        collectionName,
+        recordId
+    ) {
+        const parts = getFirestoreParts();
+
+        if (!parts || !recordId) {
+            return false;
+        }
+
+        const reference = getFirestoreDocumentReference(
+            collectionName,
+            recordId
+        );
+
+        if (!reference) {
+            return false;
+        }
+
+        await parts.modules.deleteDoc(reference);
+
+        return true;
+    }
+
+    function queueFirestoreWrite(
+        collectionName,
+        record
+    ) {
+        if (
+            !firestoreState.enabled ||
+            !record ||
+            !record.id
+        ) {
+            return;
+        }
+
+        const queueKey =
+            collectionName + "/" + record.id;
+
+        firestoreState.pending.set(
+            queueKey,
+            {
+                type: "write",
+                collection: collectionName,
+                record: deepClone(record)
+            }
+        );
+
+        processFirestoreQueue();
+    }
+
+    function queueFirestoreDelete(
+        collectionName,
+        recordId
+    ) {
+        if (
+            !firestoreState.enabled ||
+            !recordId
+        ) {
+            return;
+        }
+
+        const queueKey =
+            collectionName + "/" + recordId;
+
+        firestoreState.pending.set(
+            queueKey,
+            {
+                type: "delete",
+                collection: collectionName,
+                recordId: recordId
+            }
+        );
+
+        processFirestoreQueue();
+    }
+
+    async function processFirestoreQueue() {
+        if (firestoreState.syncing) {
+            return;
+        }
+
+        if (!isFirestoreReady()) {
+            return;
+        }
+
+        firestoreState.syncing = true;
+
+        try {
+            const entries = Array.from(
+                firestoreState.pending.entries()
+            );
+
+            for (let index = 0; index < entries.length; index += 1) {
+                const queueKey = entries[index][0];
+                const operation = entries[index][1];
+
+                if (!firestoreState.pending.has(queueKey)) {
+                    continue;
+                }
+
+                if (operation.type === "write") {
+                    await writeRecordToFirestore(
+                        operation.collection,
+                        operation.record
+                    );
+                }
+
+                if (operation.type === "delete") {
+                    await deleteRecordFromFirestore(
+                        operation.collection,
+                        operation.recordId
+                    );
+                }
+
+                firestoreState.pending.delete(queueKey);
+            }
+
+            firestoreState.lastSync =
+                new Date().toISOString();
+
+            firestoreState.error = null;
+        } catch (error) {
+            firestoreState.error = {
+                name: error.name || "Error",
+                message: error.message || String(error)
+            };
+
+            console.error(
+                "Firestore synchronization failed:",
+                error
+            );
+        } finally {
+            firestoreState.syncing = false;
+        }
+    }
+
+    async function pullCollectionFromFirestore(
+        collectionName
+    ) {
+        const parts = getFirestoreParts();
+
+        if (!parts) {
+            return false;
+        }
+
+        const reference = getFirestoreCollectionReference(
+            collectionName
+        );
+
+        if (!reference) {
+            return false;
+        }
+
+        const snapshot =
+            await parts.modules.getDocs(reference);
+
+        const remoteRecords = [];
+
+        snapshot.forEach(function (documentSnapshot) {
+            const data = documentSnapshot.data();
+
+            remoteRecords.push(
+                createRecord(
+                    Object.assign(
+                        {},
+                        data,
+                        {
+                            id: data.id || documentSnapshot.id
+                        }
+                    ),
+                    collectionName
+                )
+            );
+        });
+
+        const localRecords = getCollection(collectionName);
+
+        /*
+           If Firestore contains records, it becomes the source
+           of truth for this collection.
+        */
+        if (remoteRecords.length > 0) {
+            FX.data[collectionName] = remoteRecords;
+
+            FXData.collections[collectionName] =
+                FX.data[collectionName];
+
+            notifyChange(
+                collectionName,
+                remoteRecords
+            );
+
+            return true;
+        }
+
+        /*
+           If Firestore is empty but local records exist,
+           upload the local records.
+        */
+        if (localRecords.length > 0) {
+            for (
+                let index = 0;
+                index < localRecords.length;
+                index += 1
+            ) {
+                await writeRecordToFirestore(
+                    collectionName,
+                    localRecords[index]
+                );
+            }
+
+            return true;
+        }
+
+        return true;
+    }
+
+    async function synchronizeWithFirestore() {
+        if (!isFirestoreReady()) {
+            return {
+                ok: false,
+                reason: "Firebase authentication is not ready."
+            };
+        }
+
+        if (firestoreState.syncing) {
+            return {
+                ok: false,
+                reason: "Synchronization is already running."
+            };
+        }
+
+        firestoreState.syncing = true;
+
+        try {
+            for (
+                let index = 0;
+                index < FIRESTORE_COLLECTIONS.length;
+                index += 1
+            ) {
+                await pullCollectionFromFirestore(
+                    FIRESTORE_COLLECTIONS[index]
+                );
+            }
+
+            firestoreState.ready = true;
+            firestoreState.lastSync =
+                new Date().toISOString();
+            firestoreState.error = null;
+
+            syncLegacyCollections();
+            saveData();
+
+            if (typeof FX.emit === "function") {
+                FX.emit(
+                    "data:firestore-ready",
+                    getFirestoreStatus()
+                );
+            }
+
+            return {
+                ok: true,
+                timestamp: firestoreState.lastSync
+            };
+        } catch (error) {
+            firestoreState.error = {
+                name: error.name || "Error",
+                message: error.message || String(error)
+            };
+
+            console.error(
+                "Firestore data synchronization failed:",
+                error
+            );
+
+            if (typeof FX.emit === "function") {
+                FX.emit(
+                    "data:firestore-error",
+                    firestoreState.error
+                );
+            }
+
+            return {
+                ok: false,
+                error: firestoreState.error
+            };
+        } finally {
+            firestoreState.syncing = false;
+            processFirestoreQueue();
+        }
+    }
+
+    function getFirestoreStatus() {
+        return {
+            enabled: firestoreState.enabled,
+            ready: firestoreState.ready,
+            syncing: firestoreState.syncing,
+            pending: firestoreState.pending.size,
+            lastSync: firestoreState.lastSync,
+            error: deepClone(firestoreState.error)
+        };
     }
 
     /*
@@ -419,6 +904,15 @@
             FX.data[name]
         );
 
+        if (FIRESTORE_COLLECTIONS.includes(name)) {
+            FX.data[name].forEach(function (record) {
+                queueFirestoreWrite(
+                    name,
+                    record
+                );
+            });
+        }
+
         return FX.data[name];
     };
 
@@ -430,7 +924,17 @@
 
         FXData.collections[name] = collection;
 
-        notifyChange(name, newRecord);
+        notifyChange(
+            name,
+            newRecord
+        );
+
+        if (FIRESTORE_COLLECTIONS.includes(name)) {
+            queueFirestoreWrite(
+                name,
+                newRecord
+            );
+        }
 
         return newRecord;
     };
@@ -486,12 +990,20 @@
         );
 
         collection[index] = updatedRecord;
+
         FXData.collections[name] = collection;
 
         notifyChange(
             name,
             updatedRecord
         );
+
+        if (FIRESTORE_COLLECTIONS.includes(name)) {
+            queueFirestoreWrite(
+                name,
+                updatedRecord
+            );
+        }
 
         return updatedRecord;
     };
@@ -530,8 +1042,44 @@
             removedRecord
         );
 
+        if (
+            FIRESTORE_COLLECTIONS.includes(name) &&
+            removedRecord &&
+            removedRecord.id
+        ) {
+            queueFirestoreDelete(
+                name,
+                removedRecord.id
+            );
+        }
+
         return true;
     };
+
+    /*
+       Public Firestore controls
+    */
+
+    FXData.syncWithFirestore =
+        synchronizeWithFirestore;
+
+    FXData.getFirestoreStatus =
+        getFirestoreStatus;
+
+    FXData.isFirestoreReady =
+        isFirestoreReady;
+
+    FXData.enableFirestore = function () {
+        firestoreState.enabled = true;
+    };
+
+    FXData.disableFirestore = function () {
+        firestoreState.enabled = false;
+    };
+
+    /*
+       Initialize local data immediately.
+    */
 
     FX.data = loadData();
 
@@ -547,7 +1095,9 @@
         import: importData,
         getCollection: getCollection,
         createId: createId,
-        notifyChange: notifyChange
+        notifyChange: notifyChange,
+        syncWithFirestore: synchronizeWithFirestore,
+        getFirestoreStatus: getFirestoreStatus
     };
 
     window.appData = FX.data;
@@ -555,8 +1105,59 @@
     window.loadAppData = loadData;
     window.resetAppData = resetData;
 
+    /*
+       Firebase authentication integration.
+
+       Firebase.js initializes independently. This listener
+       starts synchronization whenever a user signs in.
+    */
+
+    window.addEventListener(
+        "fx:firebase:auth",
+        function (event) {
+            const user =
+                event.detail &&
+                event.detail.user
+                    ? event.detail.user
+                    : null;
+
+            if (user) {
+                synchronizeWithFirestore();
+            } else {
+                firestoreState.ready = false;
+            }
+        }
+    );
+
+    window.addEventListener(
+        "fx:firebase:ready",
+        function () {
+            if (
+                typeof Firebase.getCurrentUser === "function" &&
+                Firebase.getCurrentUser()
+            ) {
+                synchronizeWithFirestore();
+            }
+        }
+    );
+
+    /*
+       If Firebase is already initialized and the user is already
+       authenticated before this file finishes loading.
+    */
+
+    if (
+        typeof Firebase.getCurrentUser === "function" &&
+        Firebase.getCurrentUser()
+    ) {
+        synchronizeWithFirestore();
+    }
+
     if (typeof FX.emit === "function") {
-        FX.emit("data:ready", deepClone(FX.data));
+        FX.emit(
+            "data:ready",
+            deepClone(FX.data)
+        );
     }
 
 })(window, document);
