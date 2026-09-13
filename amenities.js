@@ -541,7 +541,7 @@
                     <div>
                         <span>Responsible</span>
                         <strong>
-                            ${escape(record.responsible || "—")}
+                            ${escape(record.responsible || "Abis Rizvi")}
                         </strong>
                     </div>
 
