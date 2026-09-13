@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+    >
+
+    <meta
+        name="theme-color"
+        content="#0f172a"
+    >
+
+    <meta
+        name="description"
+        content="Facility Executive OS"
+    >
+
+    <title>Facility Executive OS</title>
+
+    <!-- =========================================================
+         FACILITY EXECUTIVE OS
+         GLOBAL STYLESHEET
+         ========================================================= -->
+
+   <link
+    rel="stylesheet"
+    type="text/css"
+    href="css/app.css"
+>
+
+    <style>
+    html {
+        --fx-css-test: connected;
+    }
+
+    body {
+        outline: 4px solid transparent;
+    }
+</style>
+
+<script>
+(function () {
+    const testLink = document.querySelector(
+        'link[href*="css/app.css"]'
+    );
+
+    if (!testLink) {
+        console.error(
+            '[Facility Executive OS] app.css link was not found.'
+        );
+        return;
+    }
+
+    testLink.addEventListener('load', function () {
+        console.log(
+            '[Facility Executive OS] app.css loaded successfully:',
+            testLink.href
+        );
+    });
+
+    testLink.addEventListener('error', function () {
+        console.error(
+            '[Facility Executive OS] app.css failed to load:',
+            testLink.href
+        );
+    });
+})();
+</script>
+
+    <!-- CSS LOAD DIAGNOSTIC -->
+    <style>
+        /*
+         * This is intentionally inline.
+         * It allows us to distinguish:
+         *
+         * 1. CSS file not loading
+         * 2. CSS file loading but being overridden
+         */
+
+        html.fx-css-error body::before {
+            content: "FACILITY EXECUTIVE OS — CSS LOAD ERROR";
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 999999;
+            padding: 10px 14px;
+            background: #b91c1c;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        html.fx-css-loaded body::before {
+            content: "";
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+  <div id="fxNotifications" aria-live="polite" aria-atomic="true"></div>
+
+
+
+<!-- =========================================================
+     TOP HEADER
+     ========================================================= -->
+
+<header class="top-header">
+
+    <div class="header-left">
+
+        <button
+            class="burger-btn no-print"
+            type="button"
+            onclick="toggleSidebar()"
+            aria-label="Open navigation"
+        >
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
+        <div class="brand-title">
+            Facility Exec OS
+        </div>
+
+    </div>
+
+    <div class="header-right">
+
+        <div
+            class="sync-badge"
+            id="syncStatus"
+        >
+            Local
+        </div>
+
+        <div
+            class="date-badge"
+            id="currentDate"
+        ></div>
+        <button class="btn btn-secondary no-print" type="button" id="fxAuthToggle" onclick="toggleFXAuthPanel()">Sign in</button>
+
+    </div>
+
+</header>
+
+
+<!-- =========================================================
+     AUTHENTICATION PANEL
+     ========================================================= -->
+<section class="fx-auth-panel no-print" id="fxAuthPanel" hidden aria-labelledby="fxAuthTitle">
+  <div class="fx-auth-card">
+    <h2 id="fxAuthTitle">Firebase account access</h2>
+    <p id="fxAuthState" class="fx-auth-state">Checking authentication status…</p>
+    <form id="fxAuthForm" class="fx-auth-form">
+      <label for="fxAuthEmail">Email</label>
+      <input id="fxAuthEmail" type="email" autocomplete="username" required>
+      <label for="fxAuthPassword">Password</label>
+      <input id="fxAuthPassword" type="password" autocomplete="current-password" required>
+      <div class="fx-auth-actions">
+        <button class="btn btn-primary" type="submit">Sign in</button>
+        <button class="btn" type="button" id="fxAuthSignOut">Sign out</button>
+        <button class="btn" type="button" onclick="toggleFXAuthPanel()">Close</button>
+      </div>
+      <p id="fxAuthMessage" class="fx-auth-message" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+</section>
+
+<!-- =========================================================
+     APPLICATION CONTAINER
+     ========================================================= -->
+
+<div
+    class="app-container"
+    id="app-container"
+>
+
+
+    <!-- =====================================================
+         SIDEBAR
+         ===================================================== -->
+
+    <aside
+        class="sidebar"
+        id="sidebar"
+    >
+
+        <button
+            class="nav-btn"
+            type="button"
+            onclick="switchTab('control-center')"
+            data-tab="control-center"
+        >
+            Control Center
+        </button>
+
+        <button
+            class="nav-btn active"
+            type="button"
+            onclick="switchTab('dashboard')"
+            data-tab="dashboard"
+        >
+            Dashboard
+        </button>
+
+        <button
+            class="nav-btn"
+            type="button"
+            onclick="switchTab('daily_report')"
+            data-tab="daily_report"
+        >
+            Executive Report
+        </button>
+
+        <button
+            class="nav-btn"
+            type="button"
+            onclick="switchTab('booking_report')"
+            data-tab="booking_report"
+        >
+            Booking Report
+        </button>
+
+        <button
+            class="nav-btn"
+            type="button"
+            onclick="switchTab('amenities')"
+            data-tab="amenities"
+        >
+            Amenity Master
+        </button>
+
+        <button
+            class="nav-btn"
+            type="button"
+            onclick="switchTab('control')"
+            data-tab="control"
+        >
+            Daily Checklist
+        </button>
+
+        <button
+            class="nav-btn"
+            type="button"
+            onclick="switchTab('hk_schedule')"
+            data-tab="hk_schedule"
+        >
+            HK Schedule
+        </button>
+
+        <button
+            class="nav-btn"
+            type="button"
+            onclick="switchTab('staff_master')"
+            data-tab="staff_master"
+        >
+            Staff Master
+        </button>
+
+        <button
+            class="nav-btn"
+            type="button"
+            onclick="switchTab('attendance')"
+            data-tab="attendance"
+        >
+            Staff Attendance
+        </button>
+
+        <button
+            class="nav-btn"
+            type="button"
+            onclick="switchTab('pool')"
+            data-tab="pool"
+        >
+            Pool Logs
+        </button>
+
+        <button
+            class="nav-btn"
+            type="button"
+            onclick="switchTab('maintenance')"
+            data-tab="maintenance"
+        >
+            Maintenance
+        </button>
+
+        <button
+            class="nav-btn"
+            type="button"
+            onclick="switchTab('inventory')"
+            data-tab="inventory"
+        >
+            Inventory
+        </button>
+
+        <button
+            class="nav-btn"
+            type="button"
+            onclick="switchTab('issues')"
+            data-tab="issues"
+        >
+            Complaints Log
+        </button>
+
+        <button
+            class="nav-btn"
+            type="button"
+            onclick="switchTab('manager_walk')"
+            data-tab="manager_walk"
+        >
+            Manager's Walk
+        </button>
+
+        <button
+            class="nav-btn"
+            type="button"
+            onclick="switchTab('deep_clean')"
+            data-tab="deep_clean"
+        >
+            Deep Cleaning
+        </button>
+
+        <button
+            class="nav-btn"
+            type="button"
+            onclick="switchTab('bookings')"
+            data-tab="bookings"
+        >
+            Bookings
+        </button>
+
+    </aside>
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+         ===================================================== -->
+
+    <main
+        class="main-content"
+        onclick="closeSidebarOnMobile()"
+    >
+
+ <!-- =================================================
+         CONTROL CENTER
+         ================================================= -->
+
+
+
+        <!-- =================================================
+             DASHBOARD
+             ================================================= -->
+
+        <section
+            id="tab-dashboard"
+            class="tab-content active"
+        >
+
+            <div class="dashboard-page-header">
+
+                <div>
+
+                    <h2>
+                        Facility Command Center
+                    </h2>
+
+                    <div class="dashboard-page-subtitle">
+                        Live operational overview of facility operations
+                    </div>
+
+                </div>
+
+                <div
+                    class="tag tag-green"
+                    id="dashboard-health"
+                >
+                    Operational
+                </div>
+
+            </div>
+
+
+            <!-- KPI GRID -->
+
+            <div class="grid-stats dashboard-kpi-grid">
+
+                <div class="stat-box dashboard-kpi">
+
+                    <div class="title">
+                        Total Amenities
+                    </div>
+
+                    <div
+                        class="val"
+                        id="dash-amenities"
+                    >
+                        0
+                    </div>
+
+                    <div class="dashboard-kpi-sub">
+                        Registered facilities
+                    </div>
+
+                </div>
+
+
+                <div class="stat-box dashboard-kpi">
+
+                    <div class="title">
+                        Completed Tasks
+                    </div>
+
+                    <div
+                        class="val"
+                        id="dash-completed"
+                    >
+                        0
+                    </div>
+
+                    <div
+                        class="dashboard-kpi-sub"
+                        id="dash-completed-sub"
+                    >
+                        0% completion
+                    </div>
+
+                </div>
+
+
+                <div class="stat-box dashboard-kpi">
+
+                    <div class="title">
+                        Pending Tasks
+                    </div>
+
+                    <div
+                        class="val"
+                        id="dash-pending"
+                    >
+                        0
+                    </div>
+
+                    <div class="dashboard-kpi-sub">
+                        Requiring attention
+                    </div>
+
+                </div>
+
+
+                <div class="stat-box dashboard-kpi">
+
+                    <div class="title">
+                        Active Issues
+                    </div>
+
+                    <div
+                        class="val"
+                        id="dash-issues"
+                    >
+                        0
+                    </div>
+
+                    <div class="dashboard-kpi-sub">
+                        Open issues
+                    </div>
+
+                </div>
+
+
+                <div class="stat-box dashboard-kpi">
+
+                    <div class="title">
+                        Today's Bookings
+                    </div>
+
+                    <div
+                        class="val"
+                        id="dash-bookings"
+                    >
+                        0
+                    </div>
+
+                    <div class="dashboard-kpi-sub">
+                        Scheduled today
+                    </div>
+
+                </div>
+
+
+                <div class="stat-box dashboard-kpi">
+
+                    <div class="title">
+                        Staff Present
+                    </div>
+
+                    <div
+                        class="val"
+                        id="dash-staff-present"
+                    >
+                        0
+                    </div>
+
+                    <div class="dashboard-kpi-sub">
+                        Today's attendance
+                    </div>
+
+                </div>
+
+
+                <div class="stat-box dashboard-kpi">
+
+                    <div class="title">
+                        Maintenance
+                    </div>
+
+                    <div
+                        class="val"
+                        id="dash-maintenance"
+                    >
+                        0
+                    </div>
+
+                    <div class="dashboard-kpi-sub">
+                        Logged records
+                    </div>
+
+                </div>
+
+
+                <div class="stat-box dashboard-kpi">
+
+                    <div class="title">
+                        Low Stock
+                    </div>
+
+                    <div
+                        class="val"
+                        id="dash-low-stock"
+                    >
+                        0
+                    </div>
+
+                    <div class="dashboard-kpi-sub">
+                        Below reorder level
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 DAILY OPERATIONAL STATUS
+                 ================================================= -->
+
+            <div class="dashboard-grid">
+
+
+                <!-- COMPLETION -->
+
+                <div class="card dashboard-card">
+
+                    <div class="card-header">
+
+                        <h3>
+                            Daily Operational Completion
+                        </h3>
+
+                    </div>
+
+                    <div class="dashboard-panel-body">
+
+                        <div class="dashboard-progress-wrap">
+
+                            <div class="dashboard-progress-top">
+
+                                <strong
+                                    id="dash-completion-percent"
+                                >
+                                    0%
+                                </strong>
+
+                                <span
+                                    id="dash-completion-text"
+                                >
+                                    0 of 0 tasks completed
+                                </span>
+
+                            </div>
+
+                            <div class="dashboard-progress">
+
+                                <div
+                                    id="dash-progress-bar"
+                                    class="dashboard-progress-bar"
+                                    style="width:0%"
+                                ></div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div
+                            id="dashboard-status-summary"
+                            class="dashboard-status-summary"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- DAILY STATUS -->
+
+                <div class="card dashboard-card">
+
+                    <div class="card-header">
+
+                        <h3>
+                            Daily Status
+                        </h3>
+
+                    </div>
+
+                    <div
+                        id="dashboard-daily-status"
+                        class="dashboard-panel-body"
+                    ></div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 ISSUES + BOOKINGS
+                 ================================================= -->
+
+            <div class="dashboard-grid">
+
+
+                <div class="card dashboard-card">
+
+                    <div class="card-header">
+
+                        <h3>
+                            Open Issues
+                        </h3>
+
+                        <button
+                            class="btn no-print"
+                            type="button"
+                            onclick="switchTab('issues')"
+                        >
+                            View All
+                        </button>
+
+                    </div>
+
+                    <div
+                        id="dashboard-open-issues"
+                        class="dashboard-list"
+                    ></div>
+
+                </div>
+
+
+                <div class="card dashboard-card">
+
+                    <div class="card-header">
+
+                        <h3>
+                            Today's Bookings
+                        </h3>
+
+                        <button
+                            class="btn no-print"
+                            type="button"
+                            onclick="switchTab('bookings')"
+                        >
+                            View All
+                        </button>
+
+                    </div>
+
+                    <div
+                        id="dashboard-today-bookings"
+                        class="dashboard-list"
+                    ></div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 STAFF + INVENTORY
+                 ================================================= -->
+
+            <div class="dashboard-grid">
+
+
+                <div class="card dashboard-card">
+
+                    <div class="card-header">
+
+                        <h3>
+                            Staff Attendance
+                        </h3>
+
+                        <button
+                            class="btn no-print"
+                            type="button"
+                            onclick="switchTab('attendance')"
+                        >
+                            Attendance
+                        </button>
+
+                    </div>
+
+                    <div
+                        id="dashboard-staff"
+                        class="dashboard-list"
+                    ></div>
+
+                </div>
+
+
+                <div class="card dashboard-card">
+
+                    <div class="card-header">
+
+                        <h3>
+                            Inventory Alerts
+                        </h3>
+
+                        <button
+                            class="btn no-print"
+                            type="button"
+                            onclick="switchTab('inventory')"
+                        >
+                            Inventory
+                        </button>
+
+                    </div>
+
+                    <div
+                        id="dashboard-inventory"
+                        class="dashboard-list"
+                    ></div>
+
+                </div>
+
+            </div>
+
+
+                       <!-- =================================================
+                 FACILITY FLOOR PLANS (Ashar Arize)
+                 ================================================= -->
+            <div class="card dashboard-card" id="dashboard-floorplan-card">
+                <div class="card-header">
+                    <div>
+                        <h3>Facility Layouts</h3>
+                        <div class="dashboard-panel-sub">Ashar Arize Amenity Master Plans</div>
+                    </div>
+                    
+                    <!-- Floor Selector -->
+                    <select id="floorSelector" class="form-control" style="max-width: 240px;" onchange="changeFloorPlan(this.value)">
+                        <option value="p2">The Pavilion - P2 Level</option>
+                        <option value="stilt">Club Nirvana - Upper Stilt</option>
+                        <option value="skyzone">Skyzone - 40th Floor</option>
+                    </select>
+                </div>
+
+                <div class="floor-plan-container">
+                    
+                    <!-- P2 LEVEL -->
+                    <div id="plan-p2" class="floor-plan-view active">
+                        <div class="floor-plan-image">
+                            <img src="asset/P2.png" alt="The Pavilion - P2 Level">
+                        </div>
+                        <div class="floor-plan-list">
+                            <div class="zone-group">
+                                <h4>Astro Turf</h4>
+                                <ul>
+                                    <li>1. Main Entrance</li>
+                                    <li>2. Multipurpose Court</li>
+                                    <li>3. Spectator Plaza</li>
+                                    <li>4. Seating Area</li>
+                                    <li>5. Indoor Badminton</li>
+                                    <li>6. Amphitheatre</li>
+                                    <li>7. Adventure Play Area</li>
+                                </ul>
+                            </div>
+                            <div class="zone-group">
+                                <h4>Joy Land</h4>
+                                <ul>
+                                    <li>8. Toddler's Play Area</li>
+                                    <li>9. Kids Play Area</li>
+                                    <li>10. Trampoline</li>
+                                    <li>11. Parents Seating</li>
+                                    <li>12. Open Turf</li>
+                                    <li>13. Floral Gardens</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- UPPER STILT -->
+                    <div id="plan-stilt" class="floor-plan-view">
+                        <div class="floor-plan-image">
+                            <img src="asset/S.png" alt="Club Nirvana - Upper Stilt">
+                        </div>
+                        <div class="floor-plan-list">
+                            <div class="zone-group">
+                                <h4>Club Aqua</h4>
+                                <ul>
+                                    <li>1. Club Lobby</li>
+                                    <li>2. Gym</li>
+                                    <li>3. Cross Fit Area</li>
+                                    <li>4. Conference Room</li>
+                                    <li>5. Mini Theatre</li>
+                                    <li>6. Infinity Pool with Kids Pool</li>
+                                    <li>7. Changing & Massage Room</li>
+                                    <li>8. Sundowner Party Zone</li>
+                                    <li>9. Viewing Deck</li>
+                                </ul>
+                            </div>
+                            <div class="zone-group">
+                                <h4>Club Fit</h4>
+                                <ul>
+                                    <li>10. Senior Citizen Corner</li>
+                                    <li>11. Skating Rink</li>
+                                    <li>12. Box Cricket</li>
+                                    <li>13. Mini Golf</li>
+                                </ul>
+                            </div>
+                            <div class="zone-group">
+                                <h4>Club Jazz</h4>
+                                <ul>
+                                    <li>14. Celebration Area with Pantry</li>
+                                    <li>15. Banquet Hall</li>
+                                    <li>16. Spill over lawn & BBQ</li>
+                                    <li>17. Guest Bedrooms</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 40TH FLOOR -->
+                    <div id="plan-skyzone" class="floor-plan-view">
+                        <div class="floor-plan-image">
+                            <img src="asset/top.png" alt="Skyzone - 40th Floor">
+                        </div>
+                        <div class="floor-plan-list">
+                            <div class="zone-group">
+                                <h4>Sky Garden</h4>
+                                <ul>
+                                    <li>1. Yoga & Meditation Deck</li>
+                                    <li>2. The Hammock Plaza</li>
+                                    <li>3. Star Gazing & Party Deck</li>
+                                </ul>
+                            </div>
+                            <div class="zone-group">
+                                <h4>Sky Arcade</h4>
+                                <ul>
+                                    <li>4. Ball Pool Area</li>
+                                    <li>5. Air Hockey</li>
+                                    <li>6. Playstation Zone</li>
+                                    <li>7. Mini Futsal Area</li>
+                                    <li>8. Indoor Games Area</li>
+                                    <li>9. Dance Studio</li>
+                                    <li>10. Arts & Craft Room</li>
+                                    <li>11. Toddlers Play Area / Creche</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+
+
+            <!-- =================================================
+                 AMENITY STATUS
+                 ================================================= -->
+
+            <div class="card dashboard-card">
+
+                <div class="card-header">
+
+                    <h3>
+                        Amenity Operational Status
+                    </h3>
+
+                    <button
+                        class="btn no-print"
+                        type="button"
+                        onclick="switchTab('control')"
+                    >
+                        Daily Checklist
+                    </button>
+
+                </div>
+
+                <div
+                    id="dashboard-amenity-status"
+                    class="dashboard-amenity-grid"
+                ></div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             EMPTY MODULE SHELLS
+             ================================================= -->
+
+
+
+
+        <section
+    id="tab-booking_report"
+    class="tab-content"
+>
+</section>
+
+
+        <section
+            id="tab-amenities"
+            class="tab-content"
+        >
+            <div class="card">
+                <div class="card-header">
+                    <h3>Amenity Master</h3>
+                </div>
+                <div class="module-placeholder">
+                    Amenity Master will be built in its own phase.
+                </div>
+            </div>
+        </section>
+
+
+        <section
+            id="tab-control"
+            class="tab-content"
+        >
+            <div class="card">
+                <div class="card-header">
+                    <h3>Daily Checklist</h3>
+                </div>
+                <div class="module-placeholder">
+                    Daily Checklist will be built in Phase 3.
+                </div>
+            </div>
+        </section>
+
+
+        <section
+            id="tab-hk_schedule"
+            class="tab-content"
+        >
+            <div class="card">
+                <div class="card-header">
+                    <h3>HK Schedule</h3>
+                </div>
+                <div class="module-placeholder">
+                    HK Schedule will be built later.
+                </div>
+            </div>
+        </section>
+
+
+        <section
+            id="tab-staff_master"
+            class="tab-content"
+        >
+            <div class="card">
+                <div class="card-header">
+                    <h3>Staff Master</h3>
+                </div>
+                <div class="module-placeholder">
+                    Staff Master will be built later.
+                </div>
+            </div>
+        </section>
+
+
+        <section
+            id="tab-attendance"
+            class="tab-content"
+        >
+            <div class="card">
+                <div class="card-header">
+                    <h3>Staff Attendance</h3>
+                </div>
+                <div class="module-placeholder">
+                    Staff Attendance will be built later.
+                </div>
+            </div>
+        </section>
+
+
+        <section
+            id="tab-pool"
+            class="tab-content"
+        >
+            <div class="card">
+                <div class="card-header">
+                    <h3>Pool Logs</h3>
+                </div>
+                <div class="module-placeholder">
+                    Pool Operations will be built later.
+                </div>
+            </div>
+        </section>
+
+
+        <section
+            id="tab-maintenance"
+            class="tab-content"
+        >
+            <div class="card">
+                <div class="card-header">
+                    <h3>Maintenance</h3>
+                </div>
+                <div class="module-placeholder">
+                    Maintenance will be built later.
+                </div>
+            </div>
+        </section>
+
+
+        <section
+            id="tab-inventory"
+            class="tab-content"
+        >
+            <div class="card">
+                <div class="card-header">
+                    <h3>Inventory</h3>
+                </div>
+                <div class="module-placeholder">
+                    Inventory will be built later.
+                </div>
+            </div>
+        </section>
+
+
+        <section
+            id="tab-issues"
+            class="tab-content"
+        >
+            <div class="card">
+                <div class="card-header">
+                    <h3>Complaints Log</h3>
+                </div>
+                <div class="module-placeholder">
+                    Complaints module will be built later.
+                </div>
+            </div>
+        </section>
+
+
+        <section
+            id="tab-manager_walk"
+            class="tab-content"
+        >
+            <div class="card">
+                <div class="card-header">
+                    <h3>Manager's Walk</h3>
+                </div>
+                <div class="module-placeholder">
+                    Manager's Walk will be built later.
+                </div>
+            </div>
+        </section>
+
+
+        <section
+            id="tab-deep_clean"
+            class="tab-content"
+        >
+            <div class="card">
+                <div class="card-header">
+                    <h3>Deep Cleaning</h3>
+                </div>
+                <div class="module-placeholder">
+                    Deep Cleaning will be built later.
+                </div>
+            </div>
+        </section>
+
+
+        <section
+    id="tab-bookings"
+    class="tab-content"
+>
+</section>
+
+    </main>
+
+</div>
+
+
+<!-- =========================================================
+     MODAL SHELL
+     ========================================================= -->
+
+<div
+    class="modal-overlay"
+    id="formModal"
+    aria-hidden="true"
+>
+
+    <div class="modal">
+
+        <div class="modal-header">
+
+            <h3 id="modalTitle">
+                Record
+            </h3>
+
+            <button
+                class="modal-close"
+                type="button"
+                onclick="closeModal()"
+                aria-label="Close"
+            >
+                &times;
+            </button>
+
+        </div>
+
+        <div
+            class="modal-body"
+            id="modalBody"
+        ></div>
+
+        <div class="modal-footer">
+
+            <button
+                class="btn"
+                type="button"
+                onclick="closeModal()"
+            >
+                Cancel
+            </button>
+
+            <button
+                class="btn btn-primary"
+                type="button"
+                id="modalSaveButton"
+                onclick="saveForm()"
+            >
+                Save
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     MODULAR JAVASCRIPT
+     ========================================================= -->
+
+<script src="js/core.js" defer></script>
+<script src="js/data.js" defer></script>
+<script src="js/firebase.js" defer></script>
+
+<script src="js/dashboard.js" defer></script>
+<script src="js/checklist.js" defer></script>
+<script src="js/amenities.js" defer></script>
+<script src="js/executive-report.js" defer></script>
+<script src="js/booking-report.js" defer></script>
+<script src="js/bookings.js" defer></script>
+<script src="js/hk-schedule.js" defer></script>
+<script src="js/staff-master.js" defer></script>
+<script src="js/attendance.js" defer></script>
+<script src="js/pool.js" defer></script>
+<script src="js/maintenance.js" defer></script>
+<script src="js/inventory.js" defer></script>
+<script src="js/complaints.js" defer></script>
+<script src="js/deep-cleaning.js" defer></script>
+<script src="js/manager-walk.js" defer></script>
+
+<script src="js/app.js" defer></script>
+<script>
+(function () {
+  function byId(id) { return document.getElementById(id); }
+  window.toggleFXAuthPanel = function () { var p = byId("fxAuthPanel"); if (p) p.hidden = !p.hidden; };
+  function renderAuth(user) {
+    var state = byId("fxAuthState"), toggle = byId("fxAuthToggle"), out = byId("fxAuthSignOut");
+    if (user) { state.textContent = "Signed in as " + (user.email || user.uid || "authenticated user"); toggle.textContent = "Account"; out.disabled = false; }
+    else { state.textContent = "Not signed in. Operational data remains local until synchronization is implemented."; toggle.textContent = "Sign in"; out.disabled = true; }
+  }
+  var authBound = false;
+  function bind() {
+    if (!window.FXFirebase || typeof FXFirebase.onAuthStateChanged !== "function") return;
+    if (authBound) return;
+    authBound = true;
+    FXFirebase.onAuthStateChanged(renderAuth);
+    byId("fxAuthForm").addEventListener("submit", async function (e) {
+      e.preventDefault(); byId("fxAuthMessage").textContent = "Signing in…";
+      try { await FXFirebase.signInWithEmailAndPassword(byId("fxAuthEmail").value.trim(), byId("fxAuthPassword").value); byId("fxAuthMessage").textContent = "Sign-in successful."; }
+      catch (error) { byId("fxAuthMessage").textContent = error.message || "Sign-in failed."; }
+    });
+    byId("fxAuthSignOut").addEventListener("click", async function () {
+      try { await FXFirebase.signOut(); byId("fxAuthMessage").textContent = "Signed out."; } catch (error) { byId("fxAuthMessage").textContent = error.message || "Sign-out failed."; }
+    });
+  }
+  window.addEventListener("fx:firebase:ready", bind, { once: true });
+  window.addEventListener("fx:firebase:auth", function (e) { renderAuth(e.detail && e.detail.user); });
+  setTimeout(bind, 0);
+})();
+</script>
+
+
+
+</body>
+</html>
