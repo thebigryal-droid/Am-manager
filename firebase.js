@@ -1,283 +1,288 @@
-
 /* =========================================================
-   FACILITY EXECUTIVE OS
-   FIREBASE ADAPTER
-   Firebase project: rfth-pro
-   ========================================================= */
+FACILITY EXECUTIVE OS
+FIREBASE ADAPTER
+Firebase project: rfth-pro
+========================================================= */
 
 (function () {
-  "use strict";
+"use strict";
 
-  const config = {
-    apiKey: "AIzaSyCCB71JtHMCWCG4kNs6XkcGYwvu-2k8JiQ",
-    authDomain: "rfth-pro.firebaseapp.com",
-    projectId: "rfth-pro",
-    storageBucket: "rfth-pro.firebasestorage.app",
-    messagingSenderId: "494901173654",
-    appId: "1:494901173654:web:5ab8a4f4435eaf2d60d1b7"
-  };
+const config = {
+apiKey: "AIzaSyCCB71JtHMCWCG4kNs6XkcGYwvu-2k8JiQ",
+authDomain: "rfth-pro.firebaseapp.com",
+projectId: "rfth-pro",
+storageBucket: "rfth-pro.firebasestorage.app",
+messagingSenderId: "494901173654",
+appId: "1:494901173654:web:5ab8a4f4435eaf2d60d1b7"
+};
 
-  const state = {
-    status: "not-initialized",
-    app: null,
-    db: null,
-    auth: null,
-    modules: null,
-    authModule: null,
-    error: null,
-    user: null,
-    lastTest: null
-  };
+const state = {
+status: "not-initialized",
+app: null,
+db: null,
+auth: null,
+modules: null,
+authModule: null,
+error: null,
+user: null,
+lastTest: null
+};
 
-  const firebase = (window.FXFirebase = window.FXFirebase || {});
+const firebase = (window.FXFirebase = window.FXFirebase || {});
 
-  firebase.config = Object.assign({}, config);
-  firebase.state = state;
+firebase.config = Object.assign({}, config);
+firebase.state = state;
 
-  function emit(eventName, detail) {
-    window.dispatchEvent(
-      new CustomEvent("fx:firebase:" + eventName, {
-        detail: detail || {}
-      })
-    );
-  }
+function emit(eventName, detail) {
+window.dispatchEvent(
+new CustomEvent("fx:firebase:" + eventName, {
+detail: detail || {}
+})
+);
+}
 
-  function setStatus(status, error) {
-    state.status = status;
-    state.error = error
-      ? {
-          name: error.name || "Error",
-          message: error.message || String(error)
-        }
-      : null;
+function setStatus(status, error) {
+state.status = status;
+state.error = error
+? {
+name: error.name || "Error",
+message: error.message || String(error)
+}
+: null;
 
-    emit("status", firebase.getStatus());
-  }
+emit("status", firebase.getStatus());
 
-  firebase.isConfigured = function () {
-    return Boolean(
-      config.apiKey &&
-      config.projectId &&
-      config.appId
-    );
-  };
+}
 
-  firebase.getStatus = function () {
-    return Object.assign({}, state);
-  };
+firebase.isConfigured = function () {
+return Boolean(
+config.apiKey &&
+config.projectId &&
+config.appId
+);
+};
 
-  firebase.getFirestore = function () {
-    return state.db;
-  };
+firebase.getStatus = function () {
+return Object.assign({}, state);
+};
 
-  firebase.getAuth = function () {
-    return state.auth;
-  };
+firebase.getFirestore = function () {
+return state.db;
+};
 
-  firebase.getCurrentUser = function () {
-    return state.user;
-  };
+firebase.getAuth = function () {
+return state.auth;
+};
 
-  firebase.initialize = async function () {
-    if (
-      state.status === "ready" ||
-      state.status === "loading"
-    ) {
-      return state;
-    }
+firebase.getCurrentUser = function () {
+return state.user;
+};
 
-    if (!firebase.isConfigured()) {
-      setStatus("not-configured");
-      return state;
-    }
+firebase.initialize = async function () {
+if (
+state.status === "ready" ||
+state.status === "loading"
+) {
+return state;
+}
 
-    setStatus("loading");
+if (!firebase.isConfigured()) {  
+  setStatus("not-configured");  
+  return state;  
+}  
 
-    try {
-      const appModule = await import(
-        "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js"
-      );
+setStatus("loading");  
 
-      const firestoreModule = await import(
-        "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"
-      );
+try {  
+  const appModule = await import(  
+    "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js"  
+  );  
 
-      const authModule = await import(
-        "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js"
-      );
+  const firestoreModule = await import(  
+    "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"  
+  );  
 
-      state.modules = firestoreModule;
-      state.authModule = authModule;
+  const authModule = await import(  
+    "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js"  
+  );  
 
-      state.app = appModule.initializeApp(config);
-      state.db = firestoreModule.getFirestore(state.app);
-      state.auth = authModule.getAuth(state.app);
+  state.modules = firestoreModule;  
+  state.authModule = authModule;  
 
-      authModule.onAuthStateChanged(
-        state.auth,
-        function (user) {
-          state.user = user || null;
-          emit("auth", { user: state.user });
-        }
-      );
+  state.app = appModule.initializeApp(config);  
+  state.db = firestoreModule.getFirestore(state.app);  
+  state.auth = authModule.getAuth(state.app);  
 
-      setStatus("ready");
+  authModule.onAuthStateChanged(  
+    state.auth,  
+    function (user) {  
+      state.user = user || null;  
+      emit("auth", { user: state.user });  
+    }  
+  );  
 
-      emit("ready", {
-        app: state.app,
-        db: state.db,
-        auth: state.auth
-      });
-    } catch (error) {
-      setStatus("error", error);
+  setStatus("ready");  
 
-      emit("error", { error: error });
+  emit("ready", {  
+    app: state.app,  
+    db: state.db,  
+    auth: state.auth  
+  });  
+} catch (error) {  
+  setStatus("error", error);  
 
-      console.error(
-        "Facility Executive OS Firebase initialization failed:",
-        error
-      );
-    }
+  emit("error", { error: error });  
 
-    return state;
-  };
+  console.error(  
+    "Facility Executive OS Firebase initialization failed:",  
+    error  
+  );  
+}  
 
-  firebase.signInWithEmailAndPassword = async function (
-    email,
-    password
-  ) {
-    if (state.status !== "ready") {
-      await firebase.initialize();
-    }
+return state;
 
-    if (!state.auth || !state.authModule) {
-      throw new Error(
-        "Firebase Authentication is not ready."
-      );
-    }
+};
 
-    if (!email || !password) {
-      throw new Error(
-        "Email and password are required."
-      );
-    }
+firebase.signInWithEmailAndPassword = async function (
+email,
+password
+) {
+if (state.status !== "ready") {
+await firebase.initialize();
+}
 
-    const result =
-      await state.authModule.signInWithEmailAndPassword(
-        state.auth,
-        email,
-        password
-      );
+if (!state.auth || !state.authModule) {  
+  throw new Error(  
+    "Firebase Authentication is not ready."  
+  );  
+}  
 
-    state.user = result.user || null;
+if (!email || !password) {  
+  throw new Error(  
+    "Email and password are required."  
+  );  
+}  
 
-    emit("auth", { user: state.user });
+const result =  
+  await state.authModule.signInWithEmailAndPassword(  
+    state.auth,  
+    email,  
+    password  
+  );  
 
-    return result;
-  };
+state.user = result.user || null;  
 
-  firebase.onAuthStateChanged = function (callback) {
-    if (typeof callback !== "function") {
-      return function () {};
-    }
+emit("auth", { user: state.user });  
 
-    const handler = function (event) {
-      callback(
-        event.detail && event.detail.user
-          ? event.detail.user
-          : null
-      );
-    };
+return result;
 
-    window.addEventListener(
-      "fx:firebase:auth",
-      handler
-    );
+};
 
-    callback(state.user);
+firebase.onAuthStateChanged = function (callback) {
+if (typeof callback !== "function") {
+return function () {};
+}
 
-    return function () {
-      window.removeEventListener(
-        "fx:firebase:auth",
-        handler
-      );
-    };
-  };
+const handler = function (event) {  
+  callback(  
+    event.detail && event.detail.user  
+      ? event.detail.user  
+      : null  
+  );  
+};  
 
-  firebase.signOut = async function () {
-    if (!state.auth || !state.authModule) {
-      return;
-    }
+window.addEventListener(  
+  "fx:firebase:auth",  
+  handler  
+);  
 
-    await state.authModule.signOut(state.auth);
+callback(state.user);  
 
-    state.user = null;
+return function () {  
+  window.removeEventListener(  
+    "fx:firebase:auth",  
+    handler  
+  );  
+};
 
-    emit("auth", { user: null });
-  };
+};
 
-  firebase.testConnection = async function () {
-    if (state.status !== "ready") {
-      await firebase.initialize();
-    }
+firebase.signOut = async function () {
+if (!state.auth || !state.authModule) {
+return;
+}
 
-    if (
-      state.status !== "ready" ||
-      !state.db ||
-      !state.modules
-    ) {
-      const error = new Error(
-        "Firebase is not ready."
-      );
+await state.authModule.signOut(state.auth);  
 
-      state.lastTest = {
-        ok: false,
-        timestamp: new Date().toISOString(),
-        error: error.message
-      };
+state.user = null;  
 
-      emit("test", state.lastTest);
+emit("auth", { user: null });
 
-      return state.lastTest;
-    }
+};
 
-    try {
-      const testRef = state.modules.doc(
-        state.db,
-        "_fx_system",
-        "connectivity"
-      );
+firebase.testConnection = async function () {
+if (state.status !== "ready") {
+await firebase.initialize();
+}
 
-      await state.modules.setDoc(
-        testRef,
-        {
-          application: "Facility Executive OS",
-          purpose: "connectivity-test",
-          testedAt: new Date().toISOString()
-        },
-        { merge: true }
-      );
+if (  
+  state.status !== "ready" ||  
+  !state.db ||  
+  !state.modules  
+) {  
+  const error = new Error(  
+    "Firebase is not ready."  
+  );  
 
-      const snapshot =
-        await state.modules.getDoc(testRef);
+  state.lastTest = {  
+    ok: false,  
+    timestamp: new Date().toISOString(),  
+    error: error.message  
+  };  
 
-      state.lastTest = {
-        ok: snapshot.exists(),
-        timestamp: new Date().toISOString(),
-        path: "_fx_system/connectivity"
-      };
-    } catch (error) {
-      state.lastTest = {
-        ok: false,
-        timestamp: new Date().toISOString(),
-        error: error.message
-      };
-    }
+  emit("test", state.lastTest);  
 
-    emit("test", state.lastTest);
+  return state.lastTest;  
+}  
 
-    return state.lastTest;
-  };
+try {  
+  const testRef = state.modules.doc(  
+    state.db,  
+    "_fx_system",  
+    "connectivity"  
+  );  
 
-  firebase.initialize();
+  await state.modules.setDoc(  
+    testRef,  
+    {  
+      application: "Facility Executive OS",  
+      purpose: "connectivity-test",  
+      testedAt: new Date().toISOString()  
+    },  
+    { merge: true }  
+  );  
+
+  const snapshot =  
+    await state.modules.getDoc(testRef);  
+
+  state.lastTest = {  
+    ok: snapshot.exists(),  
+    timestamp: new Date().toISOString(),  
+    path: "_fx_system/connectivity"  
+  };  
+} catch (error) {  
+  state.lastTest = {  
+    ok: false,  
+    timestamp: new Date().toISOString(),  
+    error: error.message  
+  };  
+}  
+
+emit("test", state.lastTest);  
+
+return state.lastTest;
+
+};
+
+firebase.initialize();
 })();
