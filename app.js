@@ -1369,6 +1369,67 @@ function renderAttendance(logs) {
 
 
 // =========================================================
+// STAFF & ATTENDANCE UTILITIES (Missing Block)
+// =========================================================
+window.filterStaff = function () {
+    const roleVal = document.getElementById('st-role-filter').value;
+    const searchVal = document.getElementById('st-search').value.toLowerCase();
+    let filtered = MASTER_STAFF_CACHE.filter(d => {
+        let matchesRole = !roleVal || d.role === roleVal;
+        let matchesSearch = !searchVal || d.name.toLowerCase().includes(searchVal) || (d.staffId && d.staffId.toLowerCase().includes(searchVal));
+        return matchesRole && matchesSearch;
+    });
+    renderStaff(filtered);
+};
+
+window.openStaffModal = function (docId) {
+    const s = MASTER_STAFF_CACHE.find(item => item.docId === docId);
+    if (!s) return;
+    document.getElementById('est-docid').value = s.docId;
+    document.getElementById('est-id').value = s.staffId || '';
+    document.getElementById('est-name').value = s.name || '';
+    document.getElementById('est-contact').value = s.contact || '';
+    document.getElementById('est-role').value = s.role || 'Housekeeping';
+    document.getElementById('est-shift').value = s.shift || 'Morning';
+    document.getElementById('est-off').value = s.weeklyOff || 'Monday';
+    document.getElementById('est-status').value = s.status || 'Active';
+    document.getElementById('est-resp').value = s.responsibilities || '';
+    document.getElementById('edit-staff-modal').classList.remove('hidden');
+};
+
+window.deleteStaffMember = function (id) {
+    if (confirm("Remove staff member?")) firebase.firestore().collection("staff").doc(id).delete();
+};
+
+window.filterAttendance = function () {
+    const dateVal = document.getElementById('att-date-filter').value;
+    const searchVal = document.getElementById('att-search').value.toLowerCase();
+    let filtered = MASTER_ATT_CACHE.filter(d => {
+        let matchesDate = !dateVal || d.dateString === dateVal;
+        let matchesSearch = !searchVal || d.staffName.toLowerCase().includes(searchVal);
+        return matchesDate && matchesSearch;
+    });
+    renderAttendance(filtered);
+};
+
+window.openAttModal = function (docId) {
+    const a = MASTER_ATT_CACHE.find(item => item.docId === docId);
+    if (!a) return;
+    document.getElementById('eatt-id').value = a.docId;
+    document.getElementById('eatt-staff').value = a.staffName || '';
+    document.getElementById('eatt-date').value = a.dateString || '';
+    document.getElementById('eatt-status').value = a.status || 'Present';
+    document.getElementById('eatt-reason').value = a.reason || '';
+    document.getElementById('edit-att-modal').classList.remove('hidden');
+};
+
+window.deleteAttRecord = function (id) {
+    if (confirm("Delete attendance entry?")) firebase.firestore().collection("attendance").doc(id).delete();
+};
+
+
+
+// =========================================================
 // 12. UPGRADED EXECUTIVE REPORT (8-SECTION SINGLE WORKFLOW)
 // =========================================================
 window.setReportRange = function (type) {
@@ -1596,6 +1657,71 @@ function runDataRetentionPolicy() {
     purgeCollectionOlderThan("complaints", "resolvedAt", operationalBoundary);
     purgeCollectionOlderThan("executive_reports", "createdAt", reportArchiveBoundary);
 }
+
+
+// =========================================================
+// MISSING SEARCH & FILTER UTILITIES
+// =========================================================
+
+window.filterChecklistHistory = function() {
+    const dateVal = document.getElementById('history-date-filter').value;
+    const searchVal = document.getElementById('history-search').value.toLowerCase();
+    let filtered = MASTER_CHECKLIST_LOGS.filter(d => {
+        const isoDate = d.createdAt ? d.createdAt.toDate().toISOString().split('T')[0] : d.dateString;
+        let matchesDate = !dateVal || isoDate === dateVal || d.dateString === dateVal;
+        let matchesSearch = !searchVal || (d.amenity && d.amenity.toLowerCase().includes(searchVal)) || (d.inspector && d.inspector.toLowerCase().includes(searchVal));
+        return matchesDate && matchesSearch;
+    });
+    renderChecklistHistory(filtered);
+};
+
+window.filterComplaints = function() {
+    const dateVal = document.getElementById('iss-date-filter').value;
+    const searchVal = document.getElementById('iss-search').value.toLowerCase();
+    let filtered = MASTER_COMPLAINTS_CACHE.filter(d => {
+        const isoDate = d.createdAt ? d.createdAt.toDate().toISOString().split('T')[0] : '';
+        let matchesDate = !dateVal || isoDate === dateVal;
+        let matchesSearch = !searchVal || (d.amenity && d.amenity.toLowerCase().includes(searchVal)) || (d.description && d.description.toLowerCase().includes(searchVal));
+        return matchesDate && matchesSearch;
+    });
+    renderComplaints(filtered);
+};
+
+window.filterBookings = function() {
+    const dateVal = document.getElementById('bk-date-filter').value;
+    const searchVal = document.getElementById('bk-search').value.toLowerCase();
+    let filtered = MASTER_BOOKINGS_CACHE.filter(d => {
+        let matchesDate = !dateVal || d.bookingDate === dateVal;
+        let matchString = `${d.resident} ${d.flat} ${d.wing} ${d.amenity} ${d.contact}`.toLowerCase();
+        let matchesSearch = !searchVal || matchString.includes(searchVal);
+        return matchesDate && matchesSearch;
+    });
+    renderBookings(filtered);
+};
+
+window.filterHKTasks = function() {
+    const dateVal = document.getElementById('hk-date-filter').value;
+    const searchVal = document.getElementById('hk-search').value.toLowerCase();
+    let filtered = MASTER_HK_CACHE.filter(d => {
+        let matchesDate = !dateVal || d.date === dateVal;
+        let matchesSearch = !searchVal || (d.amenity && d.amenity.toLowerCase().includes(searchVal)) || (d.staffAssigned && d.staffAssigned.toLowerCase().includes(searchVal));
+        return matchesDate && matchesSearch;
+    });
+    renderHKTasks(filtered);
+};
+
+window.filterInventory = function() {
+    const catVal = document.getElementById('inv-category-filter').value;
+    const searchVal = document.getElementById('inv-search').value.toLowerCase();
+    let filtered = MASTER_INV_CACHE.filter(d => {
+        let matchesCat = !catVal || d.category === catVal;
+        let matchesSearch = !searchVal || (d.name && d.name.toLowerCase().includes(searchVal));
+        return matchesCat && matchesSearch;
+    });
+    renderInventory(filtered);
+};
+
+
 
 // =========================================================
 // 14. UI NAVIGATION & MODAL SUBMISSION HANDLERS
