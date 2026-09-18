@@ -1,288 +1,88 @@
 /* =========================================================
-FACILITY EXECUTIVE OS
-FIREBASE ADAPTER
-Firebase project: rfth-pro
-========================================================= */
+   RYAL MANAGEMENT OS — FACILITY EXECUTIVE OS
+   FIREBASE ADAPTER & OFFLINE PERSISTENCE ENGINE
+   Project: rfth-pro
+   ========================================================= */
 
-(function () {
-"use strict";
+(function (window) {
+    "use strict";
 
-const config = {
-apiKey: "AIzaSyCCB71JtHMCWCG4kNs6XkcGYwvu-2k8JiQ",
-authDomain: "rfth-pro.firebaseapp.com",
-projectId: "rfth-pro",
-storageBucket: "rfth-pro.firebasestorage.app",
-messagingSenderId: "494901173654",
-appId: "1:494901173654:web:5ab8a4f4435eaf2d60d1b7"
-};
+    const firebaseConfig = {
+        apiKey: "AIzaSyCCB71JtHMCWCG4kNs6XkcGYwvu-2k8JiQ",
+        authDomain: "rfth-pro.firebaseapp.com",
+        projectId: "rfth-pro",
+        storageBucket: "rfth-pro.firebasestorage.app",
+        messagingSenderId: "494901173654",
+        appId: "1:494901173654:web:5ab8a4f4435eaf2d60d1b7"
+    };
 
-const state = {
-status: "not-initialized",
-app: null,
-db: null,
-auth: null,
-modules: null,
-authModule: null,
-error: null,
-user: null,
-lastTest: null
-};
+    const FXFirebase = {
+        config: firebaseConfig,
+        app: null,
+        db: null,
+        auth: null,
+        isInitialized: false,
+        isOffline: !navigator.onLine,
 
-const firebase = (window.FXFirebase = window.FXFirebase || {});
+        init: function () {
+            if (this.isInitialized) return this;
 
-firebase.config = Object.assign({}, config);
-firebase.state = state;
+            if (typeof firebase === 'undefined') {
+                console.error("Firebase SDK not found. Ensure compat SDKs are loaded in HTML.");
+                return this;
+            }
 
-function emit(eventName, detail) {
-window.dispatchEvent(
-new CustomEvent("fx:firebase:" + eventName, {
-detail: detail || {}
-})
-);
-}
+            // Initialize App
+            if (!firebase.apps.length) {
+                this.app = firebase.initializeApp(firebaseConfig);
+            } else {
+                this.app = firebase.app();
+            }
 
-function setStatus(status, error) {
-state.status = status;
-state.error = error
-? {
-name: error.name || "Error",
-message: error.message || String(error)
-}
-: null;
+            // Initialize Auth and Firestore
+            this.auth = firebase.auth();
+            this.db = firebase.firestore();
 
-emit("status", firebase.getStatus());
+            // Enable Multi-Tab Offline Persistence
+            this.db.enablePersistence({ synchronizeTabs: true })
+                .then(() => {
+                    console.log("Firestore offline persistence enabled successfully.");
+                    this.updateSyncBadge("Offline Cache Active", "bg-blue-100 text-blue-700");
+                })
+                .catch((err) => {
+                    if (err.code === 'failed-precondition') {
+                        console.warn("Offline persistence failed: Multiple tabs open simultaneously.");
+                    } else if (err.code === 'unimplemented') {
+                        console.warn("Offline persistence not supported by this browser.");
+                    } else {
+                        console.error("Firestore persistence error:", err);
+                    }
+                });
 
-}
+            // Network Connectivity Monitoring
+            window.addEventListener('online', () => {
+                this.isOffline = false;
+                this.updateSyncBadge("Connected (Online)", "bg-green-100 text-green-700");
+            });
 
-firebase.isConfigured = function () {
-return Boolean(
-config.apiKey &&
-config.projectId &&
-config.appId
-);
-};
+            window.addEventListener('offline', () => {
+                this.isOffline = true;
+                this.updateSyncBadge("Offline Mode", "bg-amber-100 text-amber-700");
+            });
 
-firebase.getStatus = function () {
-return Object.assign({}, state);
-};
+            this.isInitialized = true;
+            return this;
+        },
 
-firebase.getFirestore = function () {
-return state.db;
-};
+        updateSyncBadge: function (text, colorClasses) {
+            const badge = document.getElementById('syncStatus');
+            if (badge) {
+                badge.innerText = text;
+                badge.className = `text-xs px-2 py-1 rounded-full font-medium ${colorClasses}`;
+            }
+        }
+    };
 
-firebase.getAuth = function () {
-return state.auth;
-};
-
-firebase.getCurrentUser = function () {
-return state.user;
-};
-
-firebase.initialize = async function () {
-if (
-state.status === "ready" ||
-state.status === "loading"
-) {
-return state;
-}
-
-if (!firebase.isConfigured()) {  
-  setStatus("not-configured");  
-  return state;  
-}  
-
-setStatus("loading");  
-
-try {  
-  const appModule = await import(  
-    "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js"  
-  );  
-
-  const firestoreModule = await import(  
-    "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js"  
-  );  
-
-  const authModule = await import(  
-    "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js"  
-  );  
-
-  state.modules = firestoreModule;  
-  state.authModule = authModule;  
-
-  state.app = appModule.initializeApp(config);  
-  state.db = firestoreModule.getFirestore(state.app);  
-  state.auth = authModule.getAuth(state.app);  
-
-  authModule.onAuthStateChanged(  
-    state.auth,  
-    function (user) {  
-      state.user = user || null;  
-      emit("auth", { user: state.user });  
-    }  
-  );  
-
-  setStatus("ready");  
-
-  emit("ready", {  
-    app: state.app,  
-    db: state.db,  
-    auth: state.auth  
-  });  
-} catch (error) {  
-  setStatus("error", error);  
-
-  emit("error", { error: error });  
-
-  console.error(  
-    "Facility Executive OS Firebase initialization failed:",  
-    error  
-  );  
-}  
-
-return state;
-
-};
-
-firebase.signInWithEmailAndPassword = async function (
-email,
-password
-) {
-if (state.status !== "ready") {
-await firebase.initialize();
-}
-
-if (!state.auth || !state.authModule) {  
-  throw new Error(  
-    "Firebase Authentication is not ready."  
-  );  
-}  
-
-if (!email || !password) {  
-  throw new Error(  
-    "Email and password are required."  
-  );  
-}  
-
-const result =  
-  await state.authModule.signInWithEmailAndPassword(  
-    state.auth,  
-    email,  
-    password  
-  );  
-
-state.user = result.user || null;  
-
-emit("auth", { user: state.user });  
-
-return result;
-
-};
-
-firebase.onAuthStateChanged = function (callback) {
-if (typeof callback !== "function") {
-return function () {};
-}
-
-const handler = function (event) {  
-  callback(  
-    event.detail && event.detail.user  
-      ? event.detail.user  
-      : null  
-  );  
-};  
-
-window.addEventListener(  
-  "fx:firebase:auth",  
-  handler  
-);  
-
-callback(state.user);  
-
-return function () {  
-  window.removeEventListener(  
-    "fx:firebase:auth",  
-    handler  
-  );  
-};
-
-};
-
-firebase.signOut = async function () {
-if (!state.auth || !state.authModule) {
-return;
-}
-
-await state.authModule.signOut(state.auth);  
-
-state.user = null;  
-
-emit("auth", { user: null });
-
-};
-
-firebase.testConnection = async function () {
-if (state.status !== "ready") {
-await firebase.initialize();
-}
-
-if (  
-  state.status !== "ready" ||  
-  !state.db ||  
-  !state.modules  
-) {  
-  const error = new Error(  
-    "Firebase is not ready."  
-  );  
-
-  state.lastTest = {  
-    ok: false,  
-    timestamp: new Date().toISOString(),  
-    error: error.message  
-  };  
-
-  emit("test", state.lastTest);  
-
-  return state.lastTest;  
-}  
-
-try {  
-  const testRef = state.modules.doc(  
-    state.db,  
-    "_fx_system",  
-    "connectivity"  
-  );  
-
-  await state.modules.setDoc(  
-    testRef,  
-    {  
-      application: "Facility Executive OS",  
-      purpose: "connectivity-test",  
-      testedAt: new Date().toISOString()  
-    },  
-    { merge: true }  
-  );  
-
-  const snapshot =  
-    await state.modules.getDoc(testRef);  
-
-  state.lastTest = {  
-    ok: snapshot.exists(),  
-    timestamp: new Date().toISOString(),  
-    path: "_fx_system/connectivity"  
-  };  
-} catch (error) {  
-  state.lastTest = {  
-    ok: false,  
-    timestamp: new Date().toISOString(),  
-    error: error.message  
-  };  
-}  
-
-emit("test", state.lastTest);  
-
-return state.lastTest;
-
-};
-
-firebase.initialize();
-})();
+    // Export globally
+    window.FXFirebase = FXFirebase.init();
+})(window);
