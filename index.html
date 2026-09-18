@@ -140,21 +140,21 @@
                     <div class="p-4 space-y-4">
                         <div id="plan-stilt" class="floor-plan-view block">
                             <div class="mb-3 rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-white p-1">
-                                <img src="S.png" alt="Upper Stilt Layout" class="w-full h-auto object-contain rounded">
+                                <img src="1000200951.png" alt="Upper Stilt Layout" class="w-full h-auto object-contain rounded">
                             </div>
                             <div class="text-xs font-bold text-gray-500 uppercase mb-2 border-b pb-1">Upper Stilt Zones:</div>
                             <div id="zone-stilt-list" class="flex flex-wrap gap-1.5 min-h-[35px]"></div>
                         </div>
                         <div id="plan-p2" class="floor-plan-view hidden">
                             <div class="mb-3 rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-white p-1">
-                                <img src="P2.png" alt="P2 Level Layout" class="w-full h-auto object-contain rounded">
+                                <img src="1000200952.png" alt="P2 Level Layout" class="w-full h-auto object-contain rounded">
                             </div>
                             <div class="text-xs font-bold text-gray-500 uppercase mb-2 border-b pb-1">P2 Level Zones:</div>
                             <div id="zone-p2-list" class="flex flex-wrap gap-1.5 min-h-[35px]"></div>
                         </div>
                         <div id="plan-skyzone" class="floor-plan-view hidden">
                             <div class="mb-3 rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-white p-1">
-                                <img src="top.png" alt="Skyzone Layout" class="w-full h-auto object-contain rounded">
+                                <img src="1000200953.png" alt="Skyzone Layout" class="w-full h-auto object-contain rounded">
                             </div>
                             <div class="text-xs font-bold text-gray-500 uppercase mb-2 border-b pb-1">Skyzone 40th Floor Zones:</div>
                             <div id="zone-skyzone-list" class="flex flex-wrap gap-1.5 min-h-[35px]"></div>
@@ -171,11 +171,11 @@
                         <p class="text-xs text-gray-500">Adaptive inspections & point customization</p>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="document.getElementById('add-point-modal').classList.remove('hidden')" class="bg-accent text-white px-3 py-1.5 rounded shadow text-xs font-bold">
+                        <button onclick="document.getElementById('add-point-modal').classList.remove('hidden')" class="bg-accent text-white px-3 py-1.5 rounded shadow text-xs font-bold hidden">
                             <i class="fas fa-plus mr-1"></i> Add Point
                         </button>
                         <button onclick="document.getElementById('manage-points-modal').classList.remove('hidden')" class="bg-secondary text-white px-3 py-1.5 rounded shadow text-xs font-bold">
-                            <i class="fas fa-tasks mr-1"></i> Points
+                            <i class="fas fa-tasks mr-1"></i> Global Points
                         </button>
                     </div>
                 </div>
@@ -193,7 +193,10 @@
                                 <span>Zone Specific Checks</span>
                                 <span id="cl-zone-label" class="text-accent font-black"></span>
                             </div>
-                            <div id="cl-questions-container" class="space-y-3 mb-4"></div>
+                            
+                            <!-- Dynamic Questions Rendered Here -->
+                            <div id="cl-questions-container" class="space-y-1 mb-4"></div>
+                            
                             <div id="cl-auto-complaint-box" class="hidden bg-red-50 p-3 rounded border border-red-200 mt-2 shadow-inner">
                                 <div class="text-sm font-bold text-red-700 mb-1"><i class="fas fa-engine-warning mr-1"></i> Issue Detected</div>
                                 <p class="text-xs text-red-600 mb-3">A ticket will automatically be routed to the Helpdesk.</p>
@@ -499,7 +502,6 @@
                             <input type="date" id="rep-end" class="w-full border border-gray-300 rounded p-2 text-xs focus:outline-none focus:border-accent">
                         </div>
                     </div>
-                    <!-- NEW CUSTOM NOTES BOX -->
                     <div class="mb-4">
                         <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Custom Remarks / Manager Notes (Optional)</label>
                         <textarea id="rep-custom-notes" rows="2" class="w-full border border-gray-300 rounded p-2 text-xs focus:outline-none focus:border-accent" placeholder="Add custom notes to the report..."></textarea>
@@ -528,7 +530,7 @@
                         </div>
                     </div>
 
-                    <!-- NEW: DASHBOARD SNAPSHOT (Mirrors Dashboard UI) -->
+                    <!-- DASHBOARD SNAPSHOT -->
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                         <div class="bg-gray-50 p-3 rounded border border-gray-200">
                             <div class="text-gray-500 text-[9px] uppercase font-bold tracking-wider mb-1">Amenities</div>
@@ -560,7 +562,7 @@
                         </div>
                     </div>
 
-                    <!-- NEW: CUSTOM NOTES DISPLAY -->
+                    <!-- CUSTOM NOTES DISPLAY -->
                     <div id="sr-custom-notes-container" class="hidden mb-4">
                         <h4 class="font-bold text-sm text-gray-700 border-b pb-1 mb-2"><i class="fas fa-edit text-gray-500 mr-2"></i>Manager's Remarks</h4>
                         <div id="sr-custom-notes-text" class="text-xs text-gray-800 bg-yellow-50 p-3 rounded border border-yellow-200 whitespace-pre-wrap"></div>
@@ -610,7 +612,7 @@
                         </div>
                     </div>
                     
-                    <!-- Detailed Logs (Appended to Report) -->
+                    <!-- Detailed Logs -->
                     <div class="mt-6 pt-4 border-t border-gray-200">
                         <h4 class="font-bold text-sm text-gray-700 mb-3 uppercase">Module Data Breakdown</h4>
                         <div class="space-y-4">
@@ -860,17 +862,18 @@
         </div>
     </div>
 
-    <!-- 8. MODAL: ADD CUSTOM CHECKLIST POINT -->
+    <!-- 8. MODAL: ADD CUSTOM CHECKLIST POINT (GLOBAL) -->
     <div id="add-point-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden flex flex-col">
             <div class="bg-primary text-white p-4 flex justify-between items-center shrink-0">
-                <h3 class="font-bold text-sm">Add Custom Inspection Point</h3>
+                <h3 class="font-bold text-sm">Add Global Zone Point</h3>
                 <button onclick="document.getElementById('add-point-modal').classList.add('hidden')"><i class="fas fa-times"></i></button>
             </div>
             <form id="custom-point-form" class="p-4 space-y-4 overflow-y-auto max-h-[70vh]">
+                <p class="text-[10px] text-gray-500 italic">Note: These points apply to ALL amenities inside the selected zone.</p>
                 <div><label class="block text-xs font-bold text-gray-700 mb-1">Target Floor Zone</label><select id="cp-zone" class="w-full border border-gray-300 rounded p-2 text-sm focus:outline-none" required><option value="Upper Stilt">Upper Stilt</option><option value="P2 Level">P2 Level</option><option value="Skyzone 40th Floor">Skyzone 40th Floor</option></select></div>
                 <div><label class="block text-xs font-bold text-gray-700 mb-1">Inspection Question / Point</label><input type="text" id="cp-text" placeholder="e.g., Fire extinguisher seal intact?" required class="w-full border border-gray-300 rounded p-2 text-sm focus:outline-none"></div>
-                <button type="submit" class="w-full bg-accent text-white font-bold py-2 rounded shadow text-sm hover:bg-blue-600 transition">Save Inspection Point</button>
+                <button type="submit" class="w-full bg-accent text-white font-bold py-2 rounded shadow text-sm hover:bg-blue-600 transition">Save Global Point</button>
             </form>
         </div>
     </div>
@@ -879,7 +882,7 @@
     <div id="manage-points-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden flex flex-col max-h-[85vh]">
             <div class="bg-secondary text-white p-4 flex justify-between items-center shrink-0">
-                <h3 class="font-bold text-sm">Manage Custom Points</h3>
+                <h3 class="font-bold text-sm">Manage Global Points</h3>
                 <button onclick="document.getElementById('manage-points-modal').classList.add('hidden')"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-4 overflow-y-auto space-y-4" id="manage-points-list"></div>
@@ -970,7 +973,7 @@
         </div>
     </div>
 
-    <!-- 12. AMENITY EDIT MODAL (NEW) -->
+    <!-- 12. AMENITY EDIT MODAL -->
     <div id="edit-amenity-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden flex flex-col">
             <div class="bg-accent text-white p-3 flex justify-between items-center shrink-0">
@@ -1013,10 +1016,7 @@
 
     <!-- UNIFIED JAVASCRIPT LOGIC -->
     <script>
-        // Safety wrapper to ensure Firebase object exists
-        if (typeof firebase === 'undefined') {
-            console.error("Firebase SDK failed to load. Please check your internet connection.");
-        }
+        if (typeof firebase === 'undefined') console.error("Firebase SDK failed to load. Please check your internet connection.");
 
         const firebaseConfig = {
             apiKey: "AIzaSyCCB71JtHMCWCG4kNs6XkcGYwvu-2k8JiQ", authDomain: "rfth-pro.firebaseapp.com", projectId: "rfth-pro",
@@ -1061,7 +1061,6 @@
                     if(main) main.insertAdjacentHTML('beforeend', `<section id="tab-${item.id}" class="tab-content"><div class="bg-white p-6 text-center mt-4 rounded-xl shadow border"><h3 class="font-bold">${item.label}</h3><p class="text-sm">Under construction.</p></div></section>`);
                 }
             });
-            // Initial Report load
             setReportRange('daily');
         });
 
@@ -1088,7 +1087,6 @@
         window.setReportRange = function(type) {
             const end = new Date(); let start = new Date();
             if(type === 'daily') {
-                // start and end are today
             } else if(type === 'weekly') {
                 start.setDate(end.getDate() - 7);
             } else if(type === 'monthly') {
@@ -1104,7 +1102,6 @@
             const endVal = document.getElementById('rep-end').value;
             if(!startVal || !endVal) return alert("Please select date range.");
             
-            // Format Display Date
             const sDate = new Date(startVal); const eDate = new Date(endVal);
             const isDaily = startVal === endVal;
             document.getElementById('report-date-display').innerText = isDaily ? `Date: ${sDate.toLocaleDateString()}` : `${sDate.toLocaleDateString()} to ${eDate.toLocaleDateString()}`;
@@ -1115,7 +1112,6 @@
                 return dIso >= startVal && dIso <= endVal;
             };
 
-            // Calculate metrics based on filtered date range
             let attFiltered = MASTER_ATT_CACHE.filter(a => a.dateString >= startVal && a.dateString <= endVal);
             let clInRange = MASTER_CHECKLIST_LOGS.filter(c => c.createdAt && isWithinRange(c.createdAt.toDate()));
             let clFail = clInRange.filter(c => c.hasIssues).length;
@@ -1127,16 +1123,14 @@
             let poolInRange = MASTER_POOL_CACHE.filter(p => p.dateString >= startVal && p.dateString <= endVal);
             let safePools = poolInRange.filter(p => p.ph >= 7.2 && p.ph <= 7.8 && p.chlorine >= 1.0 && p.chlorine <= 3.0).length;
             
-            // 1. DASHBOARD SNAPSHOT DATA POPULATION (NEW)
             document.getElementById('rep-dash-amenities').innerText = ALL_AMENITIES_CACHE.length;
-            document.getElementById('rep-dash-completed').innerText = clInRange.length; // Audits done
-            document.getElementById('rep-dash-issues').innerText = MASTER_COMPLAINTS_CACHE.filter(c => c.status !== 'Resolved').length; // Current total open
+            document.getElementById('rep-dash-completed').innerText = clInRange.length; 
+            document.getElementById('rep-dash-issues').innerText = MASTER_COMPLAINTS_CACHE.filter(c => c.status !== 'Resolved').length; 
             document.getElementById('rep-dash-bookings').innerText = bkInRange.length;
             document.getElementById('rep-dash-staff').innerText = attFiltered.length;
             document.getElementById('rep-dash-low-stock').innerText = MASTER_INV_CACHE.filter(i => i.quantity <= i.threshold).length;
             document.getElementById('rep-dash-pool').innerText = poolInRange.length;
 
-            // 2. CUSTOM NOTES POPULATION (NEW)
             const customNotesVal = document.getElementById('rep-custom-notes').value.trim();
             const notesContainer = document.getElementById('sr-custom-notes-container');
             if (customNotesVal !== '') {
@@ -1146,7 +1140,6 @@
                 notesContainer.classList.add('hidden');
             }
 
-            // 3. Existing granular report allocations
             document.getElementById('sr-staff-clocks').innerText = attFiltered.length;
             document.getElementById('sr-cl-pass').innerText = clPass;
             document.getElementById('sr-cl-fail').innerText = clFail;
@@ -1168,7 +1161,7 @@
             document.getElementById('sr-bk-bal').innerText = `₹${totBal}`;
 
             document.getElementById('sr-pl-safe').innerText = safePools;
-            document.getElementById('dash-pool').innerText = MASTER_POOL_CACHE.filter(p => p.dateString === new Date().toISOString().split('T')[0]).length; // Update main dashboard too
+            document.getElementById('dash-pool').innerText = MASTER_POOL_CACHE.filter(p => p.dateString === new Date().toISOString().split('T')[0]).length; 
 
             let lowInvHtml = '';
             MASTER_INV_CACHE.filter(i => i.quantity <= i.threshold).forEach(i => {
@@ -1176,7 +1169,6 @@
             });
             document.getElementById('sr-inv-list').innerHTML = lowInvHtml || '<div class="text-gray-400 italic">No low stock alerts.</div>';
 
-            // Detailed Logs
             let bkDetailsHtml = '';
             bkInRange.forEach(b => { bkDetailsHtml += `<div>• <strong>${b.amenity}</strong> - ${b.resident} (Rev: ₹${b.total} / Bal: ₹${b.balance})</div>`; });
             document.getElementById('sr-details-bookings').innerHTML = bkDetailsHtml || '<div class="italic text-gray-400">No events confirmed for this period.</div>';
@@ -1224,7 +1216,7 @@
             };
 
             db.collection("executive_reports").add(data).then(() => {
-                window.print(); // Trigger print after saving
+                window.print(); 
             });
         };
 
@@ -1233,7 +1225,6 @@
 
         // --- MODALS ENGINE ---
         function initModalsEngine() {
-            // New Amenity Edit Submit
             document.getElementById('edit-amenity-form').addEventListener('submit', function(e) {
                 e.preventDefault(); 
                 const docId = document.getElementById('eam-id').value; 
@@ -1246,7 +1237,6 @@
                 }).then(() => { document.getElementById('edit-amenity-modal').classList.add('hidden'); }); 
             });
 
-            // Expanded Checklist Modal Update
             document.getElementById('edit-checklist-form').addEventListener('submit', function(e) { 
                 e.preventDefault(); 
                 const docId = document.getElementById('ecl-id').value; 
@@ -1280,7 +1270,6 @@
                     let mTimings = d.mOpen && d.mClose ? `${d.mOpen} - ${d.mClose}` : 'Not set';
                     let eTimings = d.eOpen && d.eClose ? `${d.eOpen} - ${d.eClose}` : 'Not set';
 
-                    // Upgraded Amenity Card with Edit Button and Timings
                     html += `<div class="bg-white p-4 rounded-xl shadow-sm border flex flex-col">
                         <div class="flex justify-between items-start mb-2">
                             <div>
@@ -1302,7 +1291,19 @@
                     opts += `<option value="${d.name}">${d.name} (${d.category})</option>`; 
                     let numMatch = d.id ? d.id.match(/\d+$/) : null; let numLabel = numMatch ? `[${parseInt(numMatch[0])}] ` : ''; let badge = `<span class="bg-gray-100 text-gray-700 text-[10px] px-2 py-1 rounded border font-medium">${numLabel}${d.name}</span>`; if (d.category === 'Upper Stilt') stiltHtml += badge; else if (d.category === 'P2 Level') p2Html += badge; else if (d.category === 'Skyzone 40th Floor') skyHtml += badge; 
                 }); 
-                if(document.getElementById('amenities-list')) document.getElementById('amenities-list').innerHTML = html; ['cl-amenity', 'iss-amenity', 'bk-amenity', 'hk-amenity', 'pl-amenity'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).innerHTML = opts; }); if(document.getElementById('dash-amenities')) document.getElementById('dash-amenities').innerText = count; if(document.getElementById('zone-stilt-list')) document.getElementById('zone-stilt-list').innerHTML = stiltHtml || '<span class="text-xs text-gray-400 italic">No amenities.</span>'; if(document.getElementById('zone-p2-list')) document.getElementById('zone-p2-list').innerHTML = p2Html || '<span class="text-xs text-gray-400 italic">No amenities.</span>'; if(document.getElementById('zone-skyzone-list')) document.getElementById('zone-skyzone-list').innerHTML = skyHtml || '<span class="text-xs text-gray-400 italic">No amenities.</span>'; 
+                if(document.getElementById('amenities-list')) document.getElementById('amenities-list').innerHTML = html; 
+                
+                // UPDATED: Carefully preserve select dropdown values during background sync so it doesn't interrupt your typing/selecting
+                ['cl-amenity', 'iss-amenity', 'bk-amenity', 'hk-amenity', 'pl-amenity'].forEach(id => { 
+                    const el = document.getElementById(id);
+                    if(el) {
+                        const currentVal = el.value;
+                        el.innerHTML = opts; 
+                        if(currentVal) el.value = currentVal;
+                    }
+                }); 
+                
+                if(document.getElementById('dash-amenities')) document.getElementById('dash-amenities').innerText = count; if(document.getElementById('zone-stilt-list')) document.getElementById('zone-stilt-list').innerHTML = stiltHtml || '<span class="text-xs text-gray-400 italic">No amenities.</span>'; if(document.getElementById('zone-p2-list')) document.getElementById('zone-p2-list').innerHTML = p2Html || '<span class="text-xs text-gray-400 italic">No amenities.</span>'; if(document.getElementById('zone-skyzone-list')) document.getElementById('zone-skyzone-list').innerHTML = skyHtml || '<span class="text-xs text-gray-400 italic">No amenities.</span>'; 
             }); 
         }
 
@@ -1325,8 +1326,29 @@
         function initSmartChecklist() { 
             const clAmenitySelect = document.getElementById('cl-amenity'); const dynamicSection = document.getElementById('cl-dynamic-section'); const questionsContainer = document.getElementById('cl-questions-container'); const autoComplaintBox = document.getElementById('cl-auto-complaint-box'); 
             if(clAmenitySelect) { 
-                clAmenitySelect.addEventListener('change', function() { autoComplaintBox.classList.add('hidden'); const selectedName = this.value; if(!selectedName) { dynamicSection.classList.add('hidden'); return; } dynamicSection.classList.remove('hidden'); const amenityObj = ALL_AMENITIES_CACHE.find(a => a.name === selectedName); const category = amenityObj ? amenityObj.category : "Upper Stilt"; document.getElementById('cl-zone-label').innerText = category; const baseQuestions = BASE_ZONE_QUESTIONS[category] || DEFAULT_QUESTIONS; const customQs = CUSTOM_POINTS_CACHE.filter(p => p.zone === category).map(p => p.text); currentChecklistQuestions = [...baseQuestions, ...customQs]; let qHtml = ''; currentChecklistQuestions.forEach((q, idx) => { qHtml += `<div class="flex justify-between items-center border-b border-gray-100 py-3"><span class="text-sm font-medium text-gray-700 w-2/3 pr-2">${q}</span><div class="flex space-x-2 w-1/3 justify-end"><label class="cursor-pointer"><input type="radio" name="q_${idx}" value="Pass" class="smart-radio pass-radio hidden" required onchange="checkComplaintTrigger()"><div class="bg-gray-100 text-gray-400 border border-gray-200 px-3 py-1.5 rounded text-xs font-bold transition-all text-center">Pass</div></label><label class="cursor-pointer"><input type="radio" name="q_${idx}" value="Fail" class="smart-radio fail-radio hidden" onchange="checkComplaintTrigger()"><div class="bg-gray-100 text-gray-400 border border-gray-200 px-3 py-1.5 rounded text-xs font-bold transition-all text-center">Fail</div></label></div></div>`; }); questionsContainer.innerHTML = qHtml; }); 
+                clAmenitySelect.addEventListener('change', function() { 
+                    autoComplaintBox.classList.add('hidden'); 
+                    const selectedName = this.value; 
+                    if(!selectedName) { dynamicSection.classList.add('hidden'); return; } 
+                    dynamicSection.classList.remove('hidden'); 
+                    const amenityObj = ALL_AMENITIES_CACHE.find(a => a.name === selectedName); 
+                    const category = amenityObj ? amenityObj.category : "Upper Stilt"; 
+                    document.getElementById('cl-zone-label').innerText = category; 
+                    
+                    // NEW: Prioritize amenity-specific checklist if it exists, otherwise fall back to generic defaults
+                    if (amenityObj && amenityObj.checklistPoints) {
+                        currentChecklistQuestions = [...amenityObj.checklistPoints];
+                    } else {
+                        const baseQuestions = BASE_ZONE_QUESTIONS[category] || DEFAULT_QUESTIONS; 
+                        const customQs = CUSTOM_POINTS_CACHE.filter(p => p.zone === category).map(p => p.text); 
+                        currentChecklistQuestions = [...baseQuestions, ...customQs]; 
+                    }
+                    
+                    window.currentAmenityForChecklist = amenityObj; // Store context for editing
+                    renderChecklistQuestions(); 
+                }); 
             } 
+            
             document.getElementById('checklist-form').addEventListener('submit', async function(e) { 
                 e.preventDefault(); if(!auth.currentUser) return; 
                 const btn = document.getElementById('cl-submit-btn'); btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...'; btn.disabled = true; 
@@ -1338,7 +1360,7 @@
                     const finalDesc = issueDesc || `Failed checks: ${failureNotes.join(', ')}`; 
                     await db.collection("complaints").add({ amenity: amenityName, department: document.getElementById('cl-issue-dept').value, description: `[AUTO] ${finalDesc}`, priority: document.getElementById('cl-issue-priority').value, status: 'Open', createdAt: firebase.firestore.FieldValue.serverTimestamp() }); 
                 } 
-                // Saving advanced data so it can be edited later
+                
                 await db.collection("daily_logs").add({ 
                     amenity: amenityName, 
                     hasIssues: hasFailures, 
@@ -1355,6 +1377,62 @@
                 if(document.getElementById('dash-completed')) document.getElementById('dash-completed').innerText = todayCount; if(document.getElementById('history-count-badge')) document.getElementById('history-count-badge').innerText = MASTER_CHECKLIST_LOGS.length; renderChecklistHistory(MASTER_CHECKLIST_LOGS); generateSmartReport(); 
             }); 
         } 
+
+        // NEW: Inline Editable Checklist Engine
+        window.renderChecklistQuestions = function() {
+            const questionsContainer = document.getElementById('cl-questions-container');
+            let qHtml = ''; 
+            currentChecklistQuestions.forEach((q, idx) => { 
+                qHtml += `<div class="flex justify-between items-center border-b border-gray-100 py-3">
+                    <div class="w-2/3 pr-2 flex flex-col">
+                        <span class="text-sm font-medium text-gray-700 leading-tight mb-1">${q}</span>
+                        <div class="flex space-x-3">
+                            <button type="button" onclick="editClPoint(${idx})" class="text-[10px] text-blue-500 font-bold uppercase hover:underline"><i class="fas fa-edit mr-0.5"></i> Edit</button>
+                            <button type="button" onclick="deleteClPoint(${idx})" class="text-[10px] text-red-500 font-bold uppercase hover:underline"><i class="fas fa-trash-alt mr-0.5"></i> Delete</button>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 w-1/3 justify-end">
+                        <label class="cursor-pointer"><input type="radio" name="q_${idx}" value="Pass" class="smart-radio pass-radio hidden" required onchange="checkComplaintTrigger()"><div class="bg-gray-100 text-gray-400 border border-gray-200 px-3 py-1.5 rounded text-xs font-bold transition-all text-center">Pass</div></label>
+                        <label class="cursor-pointer"><input type="radio" name="q_${idx}" value="Fail" class="smart-radio fail-radio hidden" onchange="checkComplaintTrigger()"><div class="bg-gray-100 text-gray-400 border border-gray-200 px-3 py-1.5 rounded text-xs font-bold transition-all text-center">Fail</div></label>
+                    </div>
+                </div>`; 
+            }); 
+            qHtml += `<button type="button" onclick="addClPoint()" class="w-full mt-3 bg-gray-50 border border-dashed border-gray-300 text-gray-500 py-2 rounded text-xs font-bold hover:bg-gray-100 transition"><i class="fas fa-plus mr-1"></i> Add Custom Point to this Amenity</button>`;
+            questionsContainer.innerHTML = qHtml;
+        };
+
+        window.saveChecklistToAmenity = function() {
+            if(!window.currentAmenityForChecklist || !window.currentAmenityForChecklist.docId) return;
+            db.collection("amenities").doc(window.currentAmenityForChecklist.docId).update({
+                checklistPoints: currentChecklistQuestions
+            }).catch(e => console.error("Error saving custom checklist:", e));
+        };
+
+        window.editClPoint = function(idx) {
+            let newText = prompt("Edit inspection point:", currentChecklistQuestions[idx]);
+            if(newText && newText.trim() !== "") {
+                currentChecklistQuestions[idx] = newText.trim();
+                saveChecklistToAmenity();
+                renderChecklistQuestions();
+            }
+        };
+
+        window.deleteClPoint = function(idx) {
+            if(confirm("Remove this point from this amenity?")) {
+                currentChecklistQuestions.splice(idx, 1);
+                saveChecklistToAmenity();
+                renderChecklistQuestions();
+            }
+        };
+
+        window.addClPoint = function() {
+            let newText = prompt("Add new specific inspection point for " + window.currentAmenityForChecklist.name + ":");
+            if(newText && newText.trim() !== "") {
+                currentChecklistQuestions.push(newText.trim());
+                saveChecklistToAmenity();
+                renderChecklistQuestions();
+            }
+        };
         
         function renderChecklistHistory(logs) { let html = ''; logs.forEach(d => { const dateObj = d.createdAt ? d.createdAt.toDate() : new Date(); const t = dateObj.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); const dStr = dateObj.toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'}); const badge = d.hasIssues ? `<span class="bg-red-100 text-red-700 text-[10px] px-2 py-0.5 rounded font-bold">Failed</span>` : `<span class="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded font-bold">Passed</span>`; html += `<div class="bg-white p-3 rounded border shadow-sm flex justify-between items-center text-xs"><div><div class="font-bold text-gray-800">${d.amenity}</div><div class="text-[10px] text-gray-400">${dStr} at ${t}</div></div><div class="flex items-center space-x-2">${badge}<button onclick="openChecklistModal('${d.docId}')" class="text-blue-500 hover:text-blue-700 p-1"><i class="fas fa-edit"></i></button><button onclick="deleteChecklistLog('${d.docId}')" class="text-red-500 hover:text-red-700 p-1"><i class="fas fa-trash-alt"></i></button></div></div>`; }); const container = document.getElementById('checklist-history-list'); if(container) container.innerHTML = html || '<div class="text-center text-gray-400 py-3 text-xs">No records loaded.</div>'; } 
         window.toggleHistoryDrawer = function() { const drawer = document.getElementById('history-drawer'); const chevron = document.getElementById('history-chevron'); if(drawer.classList.contains('hidden')) { drawer.classList.remove('hidden'); chevron.classList.add('rotate-180'); } else { drawer.classList.add('hidden'); chevron.classList.remove('rotate-180'); } }; window.filterChecklistHistory = function() { const dateVal = document.getElementById('history-date-filter').value; const searchVal = document.getElementById('history-search').value.toLowerCase(); let filtered = MASTER_CHECKLIST_LOGS.filter(d => { const isoDate = d.createdAt ? d.createdAt.toDate().toISOString().split('T')[0] : ''; let matchesDate = !dateVal || isoDate === dateVal; let matchesSearch = !searchVal || d.amenity.toLowerCase().includes(searchVal); return matchesDate && matchesSearch; }); renderChecklistHistory(filtered); }; window.deleteChecklistLog = function(docId) { if(confirm("Delete this record?")) db.collection("daily_logs").doc(docId).delete(); }; 
@@ -1385,7 +1463,6 @@
                 let editBtn = `<button onclick="openTicketModal('${d.docId}')" class="text-blue-500 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded border border-blue-100 text-[10px] font-bold"><i class="fas fa-edit mr-1"></i> Edit</button>`; 
                 let deleteBtn = `<button onclick="deleteTicket('${d.docId}')" class="text-red-500 hover:text-red-700 bg-red-50 px-2 py-1 rounded border border-red-100 text-[10px] font-bold ml-2"><i class="fas fa-trash-alt mr-1"></i> Delete</button>`; 
 
-                // Refactored Helpdesk Accordion Card
                 html += `<div class="bg-white rounded-lg border shadow-sm ${isResolved ? 'opacity-60' : ''} mb-3 overflow-hidden">
                     <div class="p-3 bg-gray-50 cursor-pointer flex justify-between items-center border-b border-gray-100" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.fa-chevron-down').classList.toggle('rotate-180')">
                         <div class="flex flex-col gap-1">
