@@ -245,7 +245,8 @@ function initAmenityMaster() {
         const listEl = document.getElementById('amenities-list');
         if (listEl) listEl.innerHTML = html;
 
-        ['cl-amenity', 'iss-amenity', 'bk-amenity', 'hk-amenity', 'pl-amenity'].forEach(id => {
+        // Added cp-amenity to the targets for the amenity dropdown
+        ['cl-amenity', 'iss-amenity', 'bk-amenity', 'hk-amenity', 'pl-amenity', 'cp-amenity'].forEach(id => {
             const el = document.getElementById(id);
             if (el) {
                 const currentVal = el.value;
@@ -314,7 +315,7 @@ window.openAmenityModal = function (docId) {
 
 
 // =========================================================
-// 6. SMART DAILY CHECKLIST & GLOBAL POINTS ENGINE
+// 6. SMART DAILY CHECKLIST & AMENITY POINTS ENGINE
 // =========================================================
 let currentActiveQuestions = [];
 
@@ -324,7 +325,7 @@ function initCustomPointsEngine() {
     document.getElementById('custom-point-form').addEventListener('submit', function(e) {
         e.preventDefault();
         db.collection("checklist_points").add({
-            zone: document.getElementById('cp-zone').value,
+            amenity: document.getElementById('cp-amenity').value, // Changed to target amenity specifically
             text: document.getElementById('cp-text').value,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => {
@@ -342,7 +343,7 @@ function initCustomPointsEngine() {
             html += `
                 <div class="bg-white border border-gray-200 rounded p-3 flex justify-between items-center shadow-sm">
                     <div>
-                        <span class="text-[10px] font-bold text-accent uppercase block">${d.zone}</span>
+                        <span class="text-[10px] font-bold text-accent uppercase block">${d.amenity || d.zone}</span>
                         <span class="text-xs font-medium text-gray-800">${d.text}</span>
                     </div>
                     <div class="flex items-center space-x-2">
@@ -390,8 +391,9 @@ function initSmartChecklist() {
             const category = amenityObj ? amenityObj.category : "Upper Stilt";
             document.getElementById('cl-zone-label').innerText = category;
 
-            const baseQs = BASE_ZONE_QUESTIONS[category] || ["Cleanliness verified?", "Lighting operational?"];
-            const customQs = CUSTOM_POINTS_CACHE.filter(p => p.zone === category).map(p => p.text);
+            // Load Custom Points for this specific Amenity, and standard points as base
+            const customQs = CUSTOM_POINTS_CACHE.filter(p => p.amenity === selectedName).map(p => ({id: p.docId, text: p.text, type: 'custom'}));
+            const baseQs = (BASE_ZONE_QUESTIONS[category] || ["Cleanliness verified?", "Lighting operational?"]).map(text => ({id: null, text: text, type: 'base'}));
             
             currentActiveQuestions = [...baseQs, ...customQs];
             renderChecklistQuestions();
@@ -412,13 +414,13 @@ function initSmartChecklist() {
             let failureNotes = [];
             let questionResults = {};
 
-            currentActiveQuestions.forEach((q, idx) => {
+            currentActiveQuestions.forEach((qObj, idx) => {
                 const selected = document.querySelector(`input[name="cl_q_${idx}"]:checked`);
                 const val = selected ? selected.value : "Pass";
-                questionResults[`point_${idx}`] = { question: q, result: val };
+                questionResults[`point_${idx}`] = { question: qObj.text, result: val };
                 if (val === "Fail") {
                     hasFailures = true;
-                    failureNotes.push(q);
+                    failureNotes.push(qObj.text);
                 }
             });
 
@@ -481,11 +483,17 @@ function initSmartChecklist() {
 function renderChecklistQuestions() {
     const container = document.getElementById('cl-questions-container');
     let html = '';
-    currentActiveQuestions.forEach((q, idx) => {
+    currentActiveQuestions.forEach((qObj, idx) => {
         html += `
-            <div class="flex justify-between items-center border-b border-gray-100 py-2.5">
-                <span class="text-xs font-medium text-gray-700 leading-tight w-2/3 pr-2">${q}</span>
-                <div class="flex space-x-1.5 w-1/3 justify-end">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center border-b border-gray-100 py-2.5 gap-2">
+                <div class="flex-1 flex flex-col">
+                    <span class="text-xs font-medium text-gray-700 leading-tight">${qObj.text}</span>
+                    <div class="flex gap-2 mt-1">
+                        <button type="button" onclick="inlineEditPoint(${idx})" class="text-[9px] text-blue-600 font-bold uppercase"><i class="fas fa-edit"></i> Edit</button>
+                        <button type="button" onclick="inlineDeletePoint(${idx})" class="text-[9px] text-rose-600 font-bold uppercase"><i class="fas fa-trash"></i> Delete</button>
+                    </div>
+                </div>
+                <div class="flex space-x-1.5 justify-start sm:justify-end shrink-0">
                     <label class="cursor-pointer">
                         <input type="radio" name="cl_q_${idx}" value="Pass" class="smart-radio pass-radio hidden" checked onchange="checkAutoComplaintTrigger()">
                         <div class="bg-gray-100 text-gray-500 px-2.5 py-1 rounded text-[10px] font-bold transition-all text-center">Pass</div>
@@ -500,6 +508,25 @@ function renderChecklistQuestions() {
     });
     container.innerHTML = html;
 }
+
+window.inlineEditPoint = function(idx) {
+    const q = currentActiveQuestions[idx];
+    const newText = prompt("Edit Inspection Point:", q.text);
+    if(newText && newText.trim() !== "") {
+        q.text = newText.trim();
+        renderChecklistQuestions();
+        if(q.type === 'custom') firebase.firestore().collection("checklist_points").doc(q.id).update({ text: q.text });
+    }
+};
+
+window.inlineDeletePoint = function(idx) {
+    const q = currentActiveQuestions[idx];
+    if(confirm("Remove this point from the current audit?")) {
+        currentActiveQuestions.splice(idx, 1);
+        renderChecklistQuestions();
+        if(q.type === 'custom') firebase.firestore().collection("checklist_points").doc(q.id).delete();
+    }
+};
 
 window.checkAutoComplaintTrigger = function () {
     let hasFail = false;
@@ -795,7 +822,8 @@ function calculateBookingFinancials() {
 function renderBookings(logs) {
     let html = '';
     logs.forEach(d => {
-        let statusBadge = d.status === 'Confirmed' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' :
+        let statusBadge = d.status === 'Completed' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                          d.status === 'Confirmed' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' :
                           d.status === 'Cancelled' ? 'bg-rose-100 text-rose-800 border-rose-200' :
                           'bg-amber-100 text-amber-800 border-amber-200';
                           
@@ -844,6 +872,25 @@ window.editBookingModal = function(docId) {
     document.getElementById('eb-refunded').value = booking.checkoutRefunded || 0;
     document.getElementById('eb-checkout-notes').value = booking.checkoutNotes || '';
     document.getElementById('edit-booking-modal').classList.remove('hidden');
+};
+
+window.markBookingDone = function() {
+    const docId = document.getElementById('eb-id').value;
+    if(!docId) return;
+    
+    if(confirm("Finalize this booking as Completed? This will lock in post-event inspection notes.")) {
+        firebase.firestore().collection("bookings").doc(docId).update({
+            status: 'Completed',
+            paid: parseFloat(document.getElementById('eb-paid').value) || 0,
+            checkoutMess: document.getElementById('eb-mess').checked,
+            checkoutDamage: document.getElementById('eb-damage').checked,
+            checkoutDeducted: parseFloat(document.getElementById('eb-deducted').value) || 0,
+            checkoutRefunded: parseFloat(document.getElementById('eb-refunded').value) || 0,
+            checkoutNotes: document.getElementById('eb-checkout-notes').value
+        }).then(() => {
+            document.getElementById('edit-booking-modal').classList.add('hidden');
+        });
+    }
 };
 
 
@@ -1126,7 +1173,7 @@ window.deleteInvItem = function (id) {
 
 
 // =========================================================
-// POOL LOGS MODULE (Missing Block)
+// POOL LOGS MODULE
 // =========================================================
 function initPoolLogs() {
     const db = firebase.firestore();
@@ -1369,7 +1416,7 @@ function renderAttendance(logs) {
 
 
 // =========================================================
-// STAFF & ATTENDANCE UTILITIES (Missing Block)
+// STAFF & ATTENDANCE UTILITIES
 // =========================================================
 window.filterStaff = function () {
     const roleVal = document.getElementById('st-role-filter').value;
@@ -1596,7 +1643,10 @@ window.executeCompleteReportWorkflow = async function () {
     btn.innerHTML = '<i class="fas fa-file-pdf text-rose-400"></i> Generate, Archive & Print Executive Report';
     btn.disabled = false;
 
-    window.print();
+    // Wait 750ms for the DOM to paint all the new HTML and images before capturing the PDF
+    setTimeout(() => {
+        window.print();
+    }, 750);
 };
 
 window.toggleReportDrawer = function () {
@@ -1660,7 +1710,7 @@ function runDataRetentionPolicy() {
 
 
 // =========================================================
-// MISSING SEARCH & FILTER UTILITIES
+// SEARCH & FILTER UTILITIES
 // =========================================================
 
 window.filterChecklistHistory = function() {
@@ -1818,7 +1868,6 @@ function initModalHandlers() {
         let failureNotes = [];
         let updatedResults = {};
 
-        // Recalculate results from dynamically generated radio buttons
         const questionElements = document.querySelectorAll('#ecl-dynamic-questions-container input[type="radio"]:checked');
         questionElements.forEach((radio, idx) => {
             const questionText = radio.getAttribute('data-question');
