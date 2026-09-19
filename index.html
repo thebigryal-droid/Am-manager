@@ -53,9 +53,11 @@
         
         /* High-Definition Print Styles for Executive Report */
         @media print {
-            body, main { background: white !important; padding: 0 !important; margin: 0 !important; overflow: visible !important; height: auto !important; }
-            .no-print, aside, header, .report-controls, #mobile-console { display: none !important; }
+            body, main, html, .flex-1 { background: white !important; padding: 0 !important; margin: 0 !important; overflow: visible !important; height: auto !important; position: static !important; }
+            .no-print, aside, header, .report-controls, #mobile-console, .tab-content:not(.active) { display: none !important; }
+            #tab-daily_report { display: block !important; }
             #report-sheet { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; page-break-inside: avoid; }
+            .page-break { page-break-before: always; }
         }
     </style>
 </head>
@@ -1059,13 +1061,11 @@
             </div>
             
             <form id="custom-point-form" class="p-4 bg-slate-50 border-b border-gray-200 space-y-3 shrink-0">
-                <p class="text-[10px] text-gray-500 italic mb-2">Note: Added points automatically append to all amenities within the selected zone.</p>
+                <p class="text-[10px] text-gray-500 italic mb-2">Note: Added points automatically append to the selected amenity checklist.</p>
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-700 uppercase mb-1">Target Zone *</label>
-                    <select id="cp-zone" required class="w-full border border-gray-300 rounded-lg p-2 text-xs">
-                        <option value="Upper Stilt">Upper Stilt</option>
-                        <option value="P2 Level">P2 Level</option>
-                        <option value="Skyzone 40th Floor">Skyzone 40th Floor</option>
+                    <label class="block text-[10px] font-bold text-gray-700 uppercase mb-1">Target Amenity *</label>
+                    <select id="cp-amenity" required class="w-full border border-gray-300 rounded-lg p-2 text-xs">
+                        <option value="">Select an Amenity...</option>
                     </select>
                 </div>
                 <div>
@@ -1183,7 +1183,10 @@
                     </div>
                     <textarea id="eb-checkout-notes" rows="2" placeholder="Inspection remarks..." class="w-full border border-gray-300 rounded p-1.5 text-xs"></textarea>
                 </div>
-                <button type="submit" class="w-full bg-accent hover:bg-blue-600 text-white font-bold py-2.5 rounded shadow text-xs mt-2 transition">Save Booking & Checkout</button>
+                <div class="flex gap-2 mt-2">
+                    <button type="submit" class="w-1/2 bg-accent hover:bg-blue-600 text-white font-bold py-2.5 rounded shadow text-xs transition">Save Booking</button>
+                    <button type="button" onclick="markBookingDone()" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded shadow text-xs transition"><i class="fas fa-check-circle mr-1"></i> Mark as Done</button>
+                </div>
             </form>
         </div>
     </div>
@@ -1243,9 +1246,6 @@
         </div>
     </div>
 
-    <!-- ADDITIONAL MODALS PRESERVED FROM PREVIOUS VERSION -->
-    <!-- (Staff Edit, Attendance Edit, Inventory Orders, Pool Logs, Amenity Master Edit) -->
-    
     <!-- FULL STAFF MASTER EDIT MODAL -->
     <div id="edit-staff-modal" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
